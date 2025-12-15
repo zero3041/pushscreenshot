@@ -1,0 +1,197 @@
+/**
+ * FontPicker Component Styles
+ * Requirements: 4.1, 4.2, 4.5
+ */
+
+.font-picker-panel {
+    background-color: #2a2a2a;
+    border: 1px solid #3a3a3a;
+    border-radius: 8px;
+    padding: 12px;
+    min-width: 220px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.font-picker-section {
+    margin-bottom: 12px;
+}
+
+.font-picker-section:last-child {
+    margin-bottom: 0;
+}
+
+.font-picker-label {
+    display: block;
+    color: #888;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+/* Font Family Dropdown */
+.font-picker-dropdown-container {
+    position: relative;
+}
+
+.font-picker-dropdown-trigger {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    background-color: #3a3a3a;
+    border: 1px solid #4a4a4a;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+}
+
+.font-picker-dropdown-trigger:hover {
+    border-color: #5a5a5a;
+}
+
+.font-picker-dropdown-trigger:focus {
+    outline: none;
+    border-color: #4a9eff;
+}
+
+.font-picker-dropdown-text {
+    flex: 1;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.font-picker-dropdown-arrow {
+    font-size: 10px;
+    color: #888;
+    margin-left: 8px;
+}
+
+.font-picker-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 4px;
+    background-color: #2a2a2a;
+    border: 1px solid #3a3a3a;
+    border-radius: 6px;
+    max-height: 240px;
+    overflow-y: auto;
+    z-index: 100;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.font-picker-dropdown-item {
+    width: 100%;
+    display: block;
+    padding: 10px 12px;
+    background-color: transparent;
+    border: none;
+    color: #ccc;
+    font-size: 14px;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.1s ease;
+}
+
+.font-picker-dropdown-item:hover {
+    background-color: #3a3a3a;
+}
+
+.font-picker-dropdown-item:focus {
+    outline: none;
+    background-color: #3a3a3a;
+}
+
+.font-picker-dropdown-item.selected {
+    background-color: #4a9eff33;
+    color: #4a9eff;
+}
+
+/* Font Size Controls */
+.font-picker-size-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.font-picker-size-button {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #3a3a3a;
+    border: 1px solid #4a4a4a;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.font-picker-size-button:hover:not(:disabled) {
+    background-color: #4a4a4a;
+}
+
+.font-picker-size-button:focus {
+    outline: none;
+    border-color: #4a9eff;
+}
+
+.font-picker-size-button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.font-picker-size-input {
+    width: 60px;
+    padding: 6px 8px;
+    background-color: #3a3a3a;
+    border: 1px solid #4a4a4a;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 14px;
+    text-align: center;
+}
+
+.font-picker-size-input:focus {
+    outline: none;
+    border-color: #4a9eff;
+}
+
+.font-picker-size-input.error {
+    border-color: #ff4444;
+    background-color: rgba(255, 68, 68, 0.1);
+}
+
+.font-picker-size-unit {
+    color: #888;
+    font-size: 12px;
+}
+
+/* Scrollbar styling for dropdown */
+.font-picker-dropdown-menu::-webkit-scrollbar {
+    width: 8px;
+}
+
+.font-picker-dropdown-menu::-webkit-scrollbar-track {
+    background: #2a2a2a;
+    border-radius: 4px;
+}
+
+.font-picker-dropdown-menu::-webkit-scrollbar-thumb {
+    background: #4a4a4a;
+    border-radius: 4px;
+}
+
+.font-picker-dropdown-menu::-webkit-scrollbar-thumb:hover {
+    background: #5a5a5a;
+}

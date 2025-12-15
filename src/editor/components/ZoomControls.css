@@ -1,0 +1,77 @@
+/**
+ * ZoomControls Component Styles
+ * Requirements: 16.1, 16.2, 16.3
+ */
+
+.zoom-controls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background-color: #2a2a2a;
+    border: 1px solid #3a3a3a;
+    border-radius: 6px;
+    padding: 4px;
+}
+
+.zoom-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    background-color: transparent;
+    border: none;
+    border-radius: 4px;
+    color: #ccc;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.zoom-button:hover:not(:disabled) {
+    background-color: #3a3a3a;
+    color: #fff;
+}
+
+.zoom-button:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px #4a9eff;
+}
+
+.zoom-button:disabled {
+    color: #555;
+    cursor: not-allowed;
+}
+
+.zoom-button svg {
+    width: 16px;
+    height: 16px;
+}
+
+.zoom-percentage {
+    min-width: 50px;
+    padding: 4px 8px;
+    background-color: transparent;
+    border: none;
+    border-radius: 4px;
+    color: #ccc;
+    font-size: 12px;
+    font-weight: 500;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.zoom-percentage:hover:not(:disabled) {
+    background-color: #3a3a3a;
+    color: #fff;
+}
+
+.zoom-percentage:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px #4a9eff;
+}
+
+.zoom-percentage:disabled {
+    cursor: default;
+}

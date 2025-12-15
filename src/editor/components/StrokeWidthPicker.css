@@ -1,0 +1,75 @@
+/**
+ * StrokeWidthPicker Component Styles
+ * Requirements: 14.1, 14.2
+ */
+
+.stroke-width-picker-panel {
+    background-color: #2a2a2a;
+    border: 1px solid #3a3a3a;
+    border-radius: 8px;
+    padding: 12px;
+    min-width: 180px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.stroke-width-picker-label {
+    display: block;
+    color: #888;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+}
+
+.stroke-width-picker-options {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.stroke-width-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 10px;
+    background-color: transparent;
+    border: 2px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.stroke-width-option:hover {
+    background-color: #3a3a3a;
+}
+
+.stroke-width-option:focus {
+    outline: none;
+    border-color: #4a9eff;
+}
+
+.stroke-width-option.selected {
+    background-color: #3a3a3a;
+    border-color: #4a9eff;
+}
+
+.stroke-width-preview {
+    width: 60px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stroke-width-line {
+    width: 100%;
+    background-color: #fff;
+    border-radius: 2px;
+}
+
+.stroke-width-value {
+    color: #ccc;
+    font-size: 12px;
+    min-width: 40px;
+    text-align: right;
+}

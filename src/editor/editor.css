@@ -1,0 +1,269 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #1a1a1a;
+  overflow: hidden;
+}
+
+.editor {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: #1a1a1a;
+}
+
+.editor-loading,
+.editor-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #333;
+  border-top-color: #4a9eff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Toolbar */
+.toolbar {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  background-color: #2a2a2a;
+  border-bottom: 1px solid #3a3a3a;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.toolbar-section {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 24px;
+  background-color: #3a3a3a;
+  margin: 0 8px;
+}
+
+.toolbar-spacer {
+  flex: 1;
+}
+
+.toolbar-label {
+  color: #888;
+  font-size: 12px;
+  margin-right: 4px;
+}
+
+.toolbar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background-color: #3a3a3a;
+  border: 1px solid #4a4a4a;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.toolbar-btn:hover:not(:disabled) {
+  background-color: #4a4a4a;
+}
+
+.toolbar-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.toolbar-btn.active {
+  background-color: #4a9eff;
+  border-color: #4a9eff;
+}
+
+.toolbar-btn-primary {
+  background-color: #4a9eff;
+  border-color: #4a9eff;
+}
+
+.toolbar-btn-primary:hover:not(:disabled) {
+  background-color: #3a8eef;
+}
+
+.tool-icon {
+  font-size: 16px;
+}
+
+/* Color picker */
+.color-picker {
+  display: flex;
+  gap: 2px;
+}
+
+.color-btn {
+  width: 20px;
+  height: 20px;
+  border: 2px solid transparent;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.color-btn:hover {
+  transform: scale(1.1);
+}
+
+.color-btn.active {
+  border-color: #fff;
+}
+
+/* Select */
+.toolbar-select {
+  padding: 4px 8px;
+  background-color: #3a3a3a;
+  border: 1px solid #4a4a4a;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.toolbar-select:focus {
+  outline: none;
+  border-color: #4a9eff;
+}
+
+/* Canvas container */
+.editor-canvas-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+  padding: 20px;
+  background-color: #1a1a1a;
+}
+
+.annotation-canvas-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.canvas-wrapper {
+  position: relative;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.main-canvas {
+  display: block;
+  background-color: #fff;
+}
+
+.overlay-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  cursor: crosshair;
+}
+
+/* Text input */
+.text-input {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid #4a9eff;
+  border-radius: 4px;
+  outline: none;
+  padding: 4px 8px;
+  min-width: 150px;
+  font-family: sans-serif;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .toolbar {
+    flex-wrap: wrap;
+    padding: 8px;
+  }
+
+  .toolbar-divider {
+    display: none;
+  }
+
+  .toolbar-spacer {
+    width: 100%;
+    height: 0;
+  }
+
+  .toolbar-label {
+    display: none;
+  }
+}
+
+
+/* Upload result notification */
+.upload-result {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 10px 16px;
+  background-color: #1a472a;
+  border-bottom: 1px solid #2d5a3d;
+  color: #4ade80;
+  font-size: 14px;
+}
+
+.upload-success {
+  font-weight: 500;
+}
+
+.upload-result a {
+  color: #4a9eff;
+  text-decoration: none;
+}
+
+.upload-result a:hover {
+  text-decoration: underline;
+}
+
+/* Upload error notification */
+.upload-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  background-color: #4a1a1a;
+  border-bottom: 1px solid #5a2d2d;
+  color: #f87171;
+  font-size: 14px;
+}

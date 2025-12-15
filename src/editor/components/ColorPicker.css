@@ -1,0 +1,115 @@
+/**
+ * ColorPicker Component Styles
+ */
+
+.color-picker-panel {
+    background-color: #2a2a2a;
+    border: 1px solid #3a3a3a;
+    border-radius: 8px;
+    padding: 12px;
+    min-width: 220px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.color-picker-section {
+    margin-bottom: 12px;
+}
+
+.color-picker-section:last-child {
+    margin-bottom: 0;
+}
+
+.color-picker-label {
+    display: block;
+    color: #888;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+/* Color Grid - 8 columns for 40 colors in 5 rows */
+.color-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 4px;
+}
+
+/* Color Swatch */
+.color-picker-swatch {
+    width: 24px;
+    height: 24px;
+    border: 2px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: transform 0.1s ease, border-color 0.1s ease;
+    padding: 0;
+    outline: none;
+}
+
+.color-picker-swatch:hover {
+    transform: scale(1.15);
+    z-index: 1;
+}
+
+.color-picker-swatch:focus {
+    border-color: #4a9eff;
+}
+
+.color-picker-swatch.selected {
+    border-color: #fff;
+    box-shadow: 0 0 0 1px #000;
+}
+
+/* Recent colors - larger swatches */
+.color-picker-recent {
+    display: flex;
+    gap: 6px;
+}
+
+.color-picker-swatch.recent {
+    width: 28px;
+    height: 28px;
+}
+
+/* Hex Input Row */
+.color-picker-hex-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.color-picker-preview {
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    border: 1px solid #4a4a4a;
+    flex-shrink: 0;
+}
+
+.color-picker-hex-input {
+    flex: 1;
+    padding: 6px 8px;
+    background-color: #3a3a3a;
+    border: 1px solid #4a4a4a;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 13px;
+    font-family: monospace;
+    text-transform: uppercase;
+}
+
+.color-picker-hex-input:focus {
+    outline: none;
+    border-color: #4a9eff;
+}
+
+.color-picker-hex-input.error {
+    border-color: #ff4444;
+    background-color: rgba(255, 68, 68, 0.1);
+}
+
+.color-picker-hex-input::placeholder {
+    color: #666;
+    text-transform: uppercase;
+}
