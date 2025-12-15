@@ -1,0 +1,298 @@
+/**
+ * Toolbar Styles
+ * Styles for the main toolbar with tools, submenus, and action buttons
+ */
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: #2a2a2a;
+  border-bottom: 1px solid #3a3a3a;
+  gap: 6px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  min-height: 48px;
+}
+
+.toolbar-section {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 28px;
+  background-color: #3a3a3a;
+  margin: 0 6px;
+}
+
+.toolbar-spacer {
+  flex: 1;
+  min-width: 8px;
+}
+
+/* Base button styles */
+.toolbar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 10px;
+  background-color: #3a3a3a;
+  border: 1px solid #4a4a4a;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.toolbar-btn:hover:not(:disabled) {
+  background-color: #4a4a4a;
+  border-color: #5a5a5a;
+}
+
+.toolbar-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.toolbar-btn.active {
+  background-color: #4a9eff;
+  border-color: #4a9eff;
+}
+
+.toolbar-btn-primary {
+  background-color: #4a9eff;
+  border-color: #4a9eff;
+}
+
+.toolbar-btn-primary:hover:not(:disabled) {
+  background-color: #3a8eef;
+  border-color: #3a8eef;
+}
+
+.toolbar-btn-danger {
+  background-color: #dc3545;
+  border-color: #dc3545;
+}
+
+.toolbar-btn-danger:hover:not(:disabled) {
+  background-color: #c82333;
+  border-color: #c82333;
+}
+
+.toolbar-btn-small {
+  padding: 4px 6px;
+  font-size: 12px;
+}
+
+/* Tool icons and labels */
+.tool-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.tool-label {
+  font-size: 12px;
+}
+
+/* Dropdown styles */
+.toolbar-dropdown {
+  position: relative;
+}
+
+.toolbar-dropdown-trigger {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.dropdown-arrow {
+  font-size: 10px;
+  opacity: 0.7;
+  margin-left: 2px;
+}
+
+.toolbar-submenu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  background-color: #2a2a2a;
+  border: 1px solid #4a4a4a;
+  border-radius: 6px;
+  padding: 4px;
+  min-width: 140px;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.toolbar-submenu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.toolbar-submenu-item:hover {
+  background-color: #3a3a3a;
+}
+
+.toolbar-submenu-item.active {
+  background-color: #4a9eff;
+}
+
+.toolbar-submenu-item .tool-icon {
+  width: 20px;
+  text-align: center;
+}
+
+/* Tool group (for sequence tool with restart button) */
+.toolbar-tool-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Color preview button */
+.toolbar-color-btn {
+  padding: 6px 8px;
+}
+
+.color-preview {
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Stroke preview */
+.stroke-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+}
+
+.stroke-line {
+  width: 16px;
+  background-color: #fff;
+  border-radius: 2px;
+  min-height: 2px;
+}
+
+.stroke-value {
+  font-size: 11px;
+  color: #aaa;
+  margin-left: 4px;
+}
+
+/* Font preview */
+.toolbar-font-btn {
+  min-width: 80px;
+}
+
+.font-preview {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.font-size {
+  font-size: 11px;
+  color: #aaa;
+  margin-left: 4px;
+}
+
+/* Zoom section */
+.toolbar-zoom {
+  display: flex;
+  align-items: center;
+}
+
+/* Export section */
+.toolbar-export {
+  display: flex;
+  gap: 4px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .toolbar {
+    padding: 6px 8px;
+    gap: 4px;
+  }
+
+  .toolbar-btn {
+    padding: 5px 8px;
+  }
+
+  .tool-label {
+    display: none;
+  }
+
+  .toolbar-divider {
+    margin: 0 4px;
+  }
+}
+
+@media (max-width: 900px) {
+  .toolbar {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .toolbar-spacer {
+    display: none;
+  }
+
+  .toolbar-divider {
+    height: 20px;
+  }
+
+  .toolbar-section {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 600px) {
+  .toolbar-divider {
+    display: none;
+  }
+
+  .toolbar-section {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .toolbar-image-tools,
+  .toolbar-actions {
+    order: 1;
+  }
+
+  .toolbar-main-tools {
+    order: 0;
+  }
+
+  .toolbar-style-settings {
+    order: 2;
+  }
+
+  .toolbar-zoom,
+  .toolbar-export {
+    order: 3;
+  }
+}

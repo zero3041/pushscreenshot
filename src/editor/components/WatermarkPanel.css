@@ -1,0 +1,304 @@
+/**
+ * WatermarkPanel Component Styles
+ * Requirements: 10.1, 10.2, 10.3, 10.4, 10.5
+ */
+
+.watermark-panel {
+    display: flex;
+    flex-direction: column;
+    background-color: #2a2a2a;
+    border: 1px solid #3a3a3a;
+    border-radius: 8px;
+    padding: 16px;
+    min-width: 300px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.watermark-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.watermark-panel-title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+}
+
+/* Toggle Switch */
+.watermark-toggle {
+    position: relative;
+    width: 40px;
+    height: 20px;
+}
+
+.watermark-toggle-input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.watermark-toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #3a3a3a;
+    border-radius: 20px;
+    transition: background-color 0.2s ease;
+}
+
+.watermark-toggle-slider::before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 2px;
+    bottom: 2px;
+    background-color: #fff;
+    border-radius: 50%;
+    transition: transform 0.2s ease;
+}
+
+.watermark-toggle-input:checked + .watermark-toggle-slider {
+    background-color: #4a9eff;
+}
+
+.watermark-toggle-input:checked + .watermark-toggle-slider::before {
+    transform: translateX(20px);
+}
+
+.watermark-toggle-input:focus + .watermark-toggle-slider {
+    box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.4);
+}
+
+/* Panel Content */
+.watermark-panel-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.watermark-panel-content.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* Image Upload Section */
+.watermark-upload-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.watermark-section-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #aaa;
+}
+
+.watermark-upload-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    border: 2px dashed #3a3a3a;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.watermark-upload-area:hover {
+    border-color: #4a9eff;
+    background-color: rgba(74, 158, 255, 0.05);
+}
+
+.watermark-upload-area.has-image {
+    padding: 8px;
+    border-style: solid;
+}
+
+.watermark-upload-input {
+    display: none;
+}
+
+.watermark-upload-icon {
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.watermark-upload-text {
+    font-size: 12px;
+    color: #888;
+    text-align: center;
+}
+
+.watermark-preview {
+    max-width: 100%;
+    max-height: 80px;
+    object-fit: contain;
+    border-radius: 4px;
+}
+
+.watermark-preview-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.watermark-preview-btn {
+    padding: 4px 8px;
+    font-size: 11px;
+    background-color: #3a3a3a;
+    border: none;
+    border-radius: 4px;
+    color: #ccc;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.watermark-preview-btn:hover {
+    background-color: #4a4a4a;
+    color: #fff;
+}
+
+.watermark-preview-btn.remove {
+    color: #ff6b6b;
+}
+
+.watermark-preview-btn.remove:hover {
+    background-color: rgba(255, 107, 107, 0.2);
+}
+
+/* Position Selector */
+.watermark-position-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.watermark-position-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 4px;
+    background-color: #1a1a1a;
+    border-radius: 6px;
+    padding: 8px;
+    aspect-ratio: 3 / 2;
+}
+
+.watermark-position-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #2a2a2a;
+    border: 2px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.watermark-position-btn:hover {
+    background-color: #3a3a3a;
+}
+
+.watermark-position-btn.selected {
+    border-color: #4a9eff;
+    background-color: rgba(74, 158, 255, 0.1);
+}
+
+.watermark-position-btn.center {
+    grid-column: 2;
+    grid-row: 1 / 3;
+}
+
+.watermark-position-dot {
+    width: 8px;
+    height: 8px;
+    background-color: #666;
+    border-radius: 50%;
+    transition: background-color 0.15s ease;
+}
+
+.watermark-position-btn.selected .watermark-position-dot {
+    background-color: #4a9eff;
+}
+
+/* Slider Sections */
+.watermark-slider-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.watermark-slider-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.watermark-slider-value {
+    font-size: 12px;
+    color: #4a9eff;
+    font-weight: 500;
+}
+
+.watermark-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    background: #3a3a3a;
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+}
+
+.watermark-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: #4a9eff;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+}
+
+.watermark-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+}
+
+.watermark-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: #4a9eff;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.watermark-slider:focus::-webkit-slider-thumb {
+    box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.3);
+}
+
+/* No Image Message */
+.watermark-no-image {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    background-color: rgba(255, 193, 7, 0.1);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    border-radius: 4px;
+    font-size: 12px;
+    color: #ffc107;
+}

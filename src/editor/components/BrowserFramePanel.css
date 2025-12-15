@@ -1,0 +1,443 @@
+/**
+ * BrowserFramePanel Component Styles
+ * Requirements: 11.1, 11.2, 11.3, 11.4
+ */
+
+.browser-frame-panel {
+    display: flex;
+    flex-direction: column;
+    background-color: #2a2a2a;
+    border: 1px solid #3a3a3a;
+    border-radius: 8px;
+    padding: 16px;
+    min-width: 300px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.browser-frame-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.browser-frame-panel-title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+}
+
+/* Toggle Switch */
+.browser-frame-toggle {
+    position: relative;
+    width: 40px;
+    height: 20px;
+}
+
+.browser-frame-toggle-input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.browser-frame-toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #3a3a3a;
+    border-radius: 20px;
+    transition: background-color 0.2s ease;
+}
+
+.browser-frame-toggle-slider::before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 2px;
+    bottom: 2px;
+    background-color: #fff;
+    border-radius: 50%;
+    transition: transform 0.2s ease;
+}
+
+.browser-frame-toggle-input:checked + .browser-frame-toggle-slider {
+    background-color: #4a9eff;
+}
+
+.browser-frame-toggle-input:checked + .browser-frame-toggle-slider::before {
+    transform: translateX(20px);
+}
+
+.browser-frame-toggle-input:focus + .browser-frame-toggle-slider {
+    box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.4);
+}
+
+/* Panel Content */
+.browser-frame-panel-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.browser-frame-panel-content.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* Section Label */
+.browser-frame-section-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #aaa;
+    margin-bottom: 8px;
+    display: block;
+}
+
+/* Style Selector */
+.browser-frame-style-section {
+    display: flex;
+    flex-direction: column;
+}
+
+.browser-frame-style-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.browser-frame-style-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 8px;
+    background-color: #1a1a1a;
+    border: 2px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.browser-frame-style-btn:hover {
+    background-color: #2a2a2a;
+    border-color: #4a4a4a;
+}
+
+.browser-frame-style-btn.selected {
+    border-color: #4a9eff;
+    background-color: rgba(74, 158, 255, 0.1);
+}
+
+.browser-frame-style-icon {
+    width: 48px;
+    height: 32px;
+    margin-bottom: 6px;
+    border-radius: 4px;
+    background-color: #3a3a3a;
+    position: relative;
+}
+
+/* Mac style icon */
+.browser-frame-style-icon.mac::before {
+    content: "";
+    position: absolute;
+    top: 4px;
+    left: 6px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #ff5f57;
+    box-shadow: 10px 0 0 #febc2e, 20px 0 0 #28c840;
+}
+
+/* Windows style icon */
+.browser-frame-style-icon.windows::before {
+    content: "− □ ×";
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    font-size: 8px;
+    color: #888;
+    letter-spacing: 2px;
+}
+
+/* URL top style icon */
+.browser-frame-style-icon.url-top::before {
+    content: "";
+    position: absolute;
+    top: 4px;
+    left: 6px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #ff5f57;
+    box-shadow: 10px 0 0 #febc2e, 20px 0 0 #28c840;
+}
+
+.browser-frame-style-icon.url-top::after {
+    content: "";
+    position: absolute;
+    top: 14px;
+    left: 6px;
+    right: 6px;
+    height: 8px;
+    background-color: #555;
+    border-radius: 2px;
+}
+
+/* URL bottom style icon */
+.browser-frame-style-icon.url-bottom::before {
+    content: "";
+    position: absolute;
+    top: 4px;
+    left: 6px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #ff5f57;
+    box-shadow: 10px 0 0 #febc2e, 20px 0 0 #28c840;
+}
+
+.browser-frame-style-icon.url-bottom::after {
+    content: "";
+    position: absolute;
+    bottom: 4px;
+    left: 6px;
+    right: 6px;
+    height: 8px;
+    background-color: #555;
+    border-radius: 2px;
+}
+
+.browser-frame-style-label {
+    font-size: 11px;
+    color: #ccc;
+}
+
+.browser-frame-style-btn.selected .browser-frame-style-label {
+    color: #4a9eff;
+}
+
+/* URL Input */
+.browser-frame-url-section {
+    display: flex;
+    flex-direction: column;
+}
+
+.browser-frame-url-input {
+    width: 100%;
+    padding: 8px 12px;
+    background-color: #1a1a1a;
+    border: 1px solid #3a3a3a;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 12px;
+    outline: none;
+    transition: border-color 0.15s ease;
+}
+
+.browser-frame-url-input:focus {
+    border-color: #4a9eff;
+}
+
+.browser-frame-url-input::placeholder {
+    color: #666;
+}
+
+/* Checkboxes */
+.browser-frame-options-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.browser-frame-checkbox {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+}
+
+.browser-frame-checkbox input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.browser-frame-checkbox-mark {
+    width: 18px;
+    height: 18px;
+    background-color: #1a1a1a;
+    border: 2px solid #3a3a3a;
+    border-radius: 4px;
+    margin-right: 8px;
+    position: relative;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.browser-frame-checkbox input:checked + .browser-frame-checkbox-mark {
+    background-color: #4a9eff;
+    border-color: #4a9eff;
+}
+
+.browser-frame-checkbox input:checked + .browser-frame-checkbox-mark::after {
+    content: "";
+    position: absolute;
+    left: 5px;
+    top: 2px;
+    width: 4px;
+    height: 8px;
+    border: solid #fff;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.browser-frame-checkbox input:focus + .browser-frame-checkbox-mark {
+    box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.4);
+}
+
+.browser-frame-checkbox-label {
+    font-size: 13px;
+    color: #ccc;
+}
+
+/* Preview Section */
+.browser-frame-preview-section {
+    display: flex;
+    flex-direction: column;
+}
+
+.browser-frame-preview {
+    background-color: #1a1a1a;
+    border-radius: 6px;
+    padding: 12px;
+    display: flex;
+    justify-content: center;
+}
+
+.browser-frame-preview-frame {
+    width: 100%;
+    max-width: 200px;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.browser-frame-preview-frame.mac {
+    border-radius: 6px;
+}
+
+.browser-frame-preview-frame.windows {
+    border-radius: 0;
+}
+
+.browser-frame-preview-header {
+    height: 24px;
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+}
+
+.browser-frame-preview-frame.mac .browser-frame-preview-header {
+    background-color: #e8e8e8;
+}
+
+.browser-frame-preview-frame.windows .browser-frame-preview-header {
+    background-color: #f0f0f0;
+    justify-content: flex-end;
+}
+
+.browser-frame-preview-buttons {
+    display: flex;
+    align-items: center;
+}
+
+.browser-frame-preview-buttons.mac {
+    gap: 4px;
+}
+
+.browser-frame-preview-buttons.mac .btn {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.browser-frame-preview-buttons.mac .btn.close {
+    background-color: #ff5f57;
+}
+
+.browser-frame-preview-buttons.mac .btn.minimize {
+    background-color: #febc2e;
+}
+
+.browser-frame-preview-buttons.mac .btn.maximize {
+    background-color: #28c840;
+}
+
+.browser-frame-preview-buttons.windows {
+    gap: 0;
+}
+
+.browser-frame-preview-buttons.windows .btn {
+    width: 20px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: #333;
+}
+
+.browser-frame-preview-buttons.windows .btn.close {
+    color: #e81123;
+}
+
+.browser-frame-preview-urlbar {
+    height: 20px;
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    gap: 4px;
+}
+
+.browser-frame-preview-frame.mac .browser-frame-preview-urlbar {
+    background-color: #e8e8e8;
+    border-top: 1px solid #d0d0d0;
+}
+
+.browser-frame-preview-frame.windows .browser-frame-preview-urlbar {
+    background-color: #f0f0f0;
+    border-top: 1px solid #d0d0d0;
+}
+
+.browser-frame-preview-urlbar .lock-icon {
+    font-size: 8px;
+}
+
+.browser-frame-preview-urlbar .url-text {
+    font-size: 9px;
+    color: #666;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.browser-frame-preview-content {
+    height: 60px;
+    background-color: #4a4a4a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.browser-frame-preview-content span {
+    font-size: 10px;
+    color: #888;
+}

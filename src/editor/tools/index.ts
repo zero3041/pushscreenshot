@@ -249,6 +249,65 @@ export { lineTool } from './LineTool';
 export { textTool } from './TextTool';
 export { calloutTool } from './CalloutTool';
 
+// Sequence tool
+export { sequenceTool, sequenceCounter, restartSequence, getCurrentSequenceNumber } from './SequenceTool';
+
+// Sticker tool
+export { stickerTool, setSelectedSticker, getSelectedSticker } from './StickerTool';
+
+// Image tool
+export {
+    imageTool,
+    setSelectedImage,
+    getSelectedImage,
+    clearSelectedImage,
+    openImagePicker,
+    loadImageFromFile,
+    calculateFitDimensions,
+} from './ImageTool';
+
+// Blur tool
+export {
+    blurTool,
+    getBlurPixelSize,
+    setBlurPixelSize,
+    applyPixelation,
+    applyBlurAnnotation,
+    DEFAULT_BLUR_PIXEL_SIZE,
+    MIN_BLUR_PIXEL_SIZE,
+    MAX_BLUR_PIXEL_SIZE,
+    BLUR_PIXEL_SIZES,
+} from './BlurTool';
+
+// Resize tool
+export {
+    resizeImage,
+    calculateResizeDimensions,
+    calculateProportionalHeight,
+    calculateProportionalWidth,
+    clampResizeDimension,
+    validateResizeDimensions,
+    getAspectRatio,
+    aspectRatiosEqual,
+    MIN_RESIZE_DIMENSION,
+    MAX_RESIZE_DIMENSION,
+} from './ResizeTool';
+export type { ResizeConfig, ResizeResult } from './ResizeTool';
+
+// Crop tool
+export {
+    cropImage,
+    validateCropSelection,
+    normalizeCropSelection,
+    clampCropSelection,
+    roundCropSelection,
+    calculateCropSelection,
+    hasMinimumCropSize,
+    formatCropDimensions,
+    MIN_CROP_DIMENSION,
+} from './CropTool';
+export type { CropSelection, CropConfig, CropResult } from './CropTool';
+
 // ============================================================================
 // Exports
 // ============================================================================

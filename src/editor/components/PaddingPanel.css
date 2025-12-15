@@ -1,0 +1,268 @@
+/**
+ * PaddingPanel Component Styles
+ * Requirements: 12.1, 12.2, 12.3
+ */
+
+.padding-panel {
+    display: flex;
+    flex-direction: column;
+    background-color: #2a2a2a;
+    border: 1px solid #3a3a3a;
+    border-radius: 8px;
+    padding: 16px;
+    min-width: 280px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.padding-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.padding-panel-title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+}
+
+/* Toggle Switch */
+.padding-toggle {
+    position: relative;
+    width: 40px;
+    height: 20px;
+}
+
+.padding-toggle-input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.padding-toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #3a3a3a;
+    border-radius: 20px;
+    transition: background-color 0.2s ease;
+}
+
+.padding-toggle-slider::before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 2px;
+    bottom: 2px;
+    background-color: #fff;
+    border-radius: 50%;
+    transition: transform 0.2s ease;
+}
+
+.padding-toggle-input:checked + .padding-toggle-slider {
+    background-color: #4a9eff;
+}
+
+.padding-toggle-input:checked + .padding-toggle-slider::before {
+    transform: translateX(20px);
+}
+
+.padding-toggle-input:focus + .padding-toggle-slider {
+    box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.4);
+}
+
+/* Panel Content */
+.padding-panel-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.padding-panel-content.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* Section Label */
+.padding-section-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #aaa;
+}
+
+/* Color Section */
+.padding-color-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: relative;
+}
+
+.padding-color-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.padding-color-btn {
+    width: 32px;
+    height: 32px;
+    border: 2px solid #3a3a3a;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.padding-color-btn:hover {
+    border-color: #4a9eff;
+    transform: scale(1.05);
+}
+
+.padding-color-btn:focus {
+    outline: none;
+    border-color: #4a9eff;
+    box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.3);
+}
+
+.padding-color-value {
+    font-size: 12px;
+    color: #888;
+    font-family: monospace;
+}
+
+.padding-color-picker-container {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 100;
+    margin-top: 8px;
+}
+
+/* Slider Section */
+.padding-slider-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.padding-slider-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.padding-size-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.padding-size-input {
+    width: 50px;
+    padding: 4px 8px;
+    font-size: 12px;
+    color: #fff;
+    background-color: #1a1a1a;
+    border: 1px solid #3a3a3a;
+    border-radius: 4px;
+    text-align: right;
+}
+
+.padding-size-input:focus {
+    outline: none;
+    border-color: #4a9eff;
+}
+
+.padding-size-input::-webkit-inner-spin-button,
+.padding-size-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.padding-size-input[type=number] {
+    -moz-appearance: textfield;
+}
+
+.padding-size-unit {
+    font-size: 12px;
+    color: #888;
+}
+
+.padding-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    background: #3a3a3a;
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+}
+
+.padding-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: #4a9eff;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+}
+
+.padding-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+}
+
+.padding-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: #4a9eff;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.padding-slider:focus::-webkit-slider-thumb {
+    box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.3);
+}
+
+/* Preview Section */
+.padding-preview-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.padding-preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #1a1a1a;
+    border-radius: 6px;
+    padding: 16px;
+}
+
+.padding-preview-outer {
+    border-radius: 4px;
+    transition: padding 0.2s ease, background-color 0.2s ease;
+}
+
+.padding-preview-inner {
+    width: 80px;
+    height: 50px;
+    background-color: #3a3a3a;
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: #888;
+}

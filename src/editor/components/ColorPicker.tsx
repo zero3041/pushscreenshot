@@ -4,7 +4,7 @@
  * Requirements: 13.1, 13.2, 13.3
  */
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useLayoutEffect } from 'react';
 import { PRESET_COLORS } from '../types/editor';
 import { parseColor, formatHexColor, isValidColor } from '../utils/colors';
 import './ColorPicker.css';
@@ -44,11 +44,15 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
     const [hexInput, setHexInput] = useState(() => colorToHex(selectedColor));
     const [hexError, setHexError] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
+    const prevSelectedColorRef = useRef(selectedColor);
 
-    // Update hex input when selected color changes externally
-    useEffect(() => {
-        setHexInput(colorToHex(selectedColor));
-        setHexError(false);
+    // Update hex input when selected color changes externally (using useLayoutEffect to avoid flicker)
+    useLayoutEffect(() => {
+        if (prevSelectedColorRef.current !== selectedColor) {
+            setHexInput(colorToHex(selectedColor));
+            setHexError(false);
+            prevSelectedColorRef.current = selectedColor;
+        }
     }, [selectedColor]);
 
     // Handle click outside to close

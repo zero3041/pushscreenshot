@@ -109,6 +109,7 @@ export interface AnnotationStyle {
     strokeWidth: number;
     fontSize?: number;
     text?: string;
+    pixelSize?: number; // For blur tool - configurable pixel size (4-32)
 }
 
 export interface Annotation {

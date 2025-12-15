@@ -158,6 +158,29 @@ body {
   border-color: #4a9eff;
 }
 
+/* Main content area with side panels */
+.editor-main-content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* Side panels container */
+.editor-side-panels {
+  width: 280px;
+  min-width: 280px;
+  background-color: #2a2a2a;
+  border-right: 1px solid #3a3a3a;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.editor-side-panels:empty {
+  display: none;
+}
+
 /* Canvas container */
 .editor-canvas-container {
   flex: 1;
@@ -167,6 +190,7 @@ body {
   overflow: auto;
   padding: 20px;
   background-color: #1a1a1a;
+  position: relative;
 }
 
 .annotation-canvas-container {
@@ -266,4 +290,290 @@ body {
   border-bottom: 1px solid #5a2d2d;
   color: #f87171;
   font-size: 14px;
+}
+
+/* Crop overlay */
+.crop-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.crop-instructions {
+  color: #fff;
+  font-size: 16px;
+  margin-bottom: 16px;
+  padding: 8px 16px;
+  background-color: rgba(0, 0, 0, 0.7);
+  border-radius: 4px;
+  pointer-events: auto;
+}
+
+.crop-actions {
+  display: flex;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.crop-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.crop-btn-cancel {
+  background-color: #4a4a4a;
+  color: #fff;
+}
+
+.crop-btn-cancel:hover {
+  background-color: #5a5a5a;
+}
+
+.crop-btn-apply {
+  background-color: #4a9eff;
+  color: #fff;
+}
+
+.crop-btn-apply:hover:not(:disabled) {
+  background-color: #3a8eef;
+}
+
+.crop-btn-apply:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Effects toolbar section */
+.toolbar-effects {
+  display: flex;
+  gap: 4px;
+}
+
+/* Panel common styles */
+.editor-side-panels > * {
+  background-color: #2a2a2a;
+  border-bottom: 1px solid #3a3a3a;
+}
+
+.editor-side-panels > *:last-child {
+  border-bottom: none;
+}
+
+/* Panel header common styles */
+.editor-side-panels h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: #fff;
+}
+
+/* Panel toggle common styles */
+.editor-side-panels .toggle-slider {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  background-color: #4a4a4a;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.editor-side-panels .toggle-slider::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background-color: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+}
+
+.editor-side-panels input:checked + .toggle-slider {
+  background-color: #4a9eff;
+}
+
+.editor-side-panels input:checked + .toggle-slider::after {
+  transform: translateX(16px);
+}
+
+/* Slider common styles */
+.editor-side-panels input[type="range"] {
+  width: 100%;
+  height: 4px;
+  background: #4a4a4a;
+  border-radius: 2px;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.editor-side-panels input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  background: #4a9eff;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.editor-side-panels input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  background: #4a9eff;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}
+
+/* Input common styles */
+.editor-side-panels input[type="number"],
+.editor-side-panels input[type="text"] {
+  background-color: #3a3a3a;
+  border: 1px solid #4a4a4a;
+  border-radius: 4px;
+  color: #fff;
+  padding: 6px 8px;
+  font-size: 13px;
+}
+
+.editor-side-panels input[type="number"]:focus,
+.editor-side-panels input[type="text"]:focus {
+  outline: none;
+  border-color: #4a9eff;
+}
+
+/* Button common styles */
+.editor-side-panels button {
+  background-color: #3a3a3a;
+  border: 1px solid #4a4a4a;
+  border-radius: 4px;
+  color: #fff;
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.editor-side-panels button:hover:not(:disabled) {
+  background-color: #4a4a4a;
+}
+
+.editor-side-panels button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.editor-side-panels button.primary {
+  background-color: #4a9eff;
+  border-color: #4a9eff;
+}
+
+.editor-side-panels button.primary:hover:not(:disabled) {
+  background-color: #3a8eef;
+}
+
+/* Section label common styles */
+.editor-side-panels .section-label {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 8px;
+  display: block;
+}
+
+/* Disabled panel content */
+.editor-side-panels .disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Responsive adjustments for side panels */
+@media (max-width: 1024px) {
+  .editor-side-panels {
+    width: 240px;
+    min-width: 240px;
+  }
+}
+
+@media (max-width: 768px) {
+  .editor-main-content {
+    flex-direction: column;
+  }
+
+  .editor-side-panels {
+    width: 100%;
+    min-width: 100%;
+    max-height: 250px;
+    border-right: none;
+    border-bottom: 1px solid #3a3a3a;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .editor-side-panels > * {
+    flex: 1;
+    min-width: 200px;
+    border-right: 1px solid #3a3a3a;
+    border-bottom: none;
+  }
+
+  .editor-side-panels > *:last-child {
+    border-right: none;
+  }
+}
+
+/* Scrollbar styles for side panels */
+.editor-side-panels::-webkit-scrollbar {
+  width: 6px;
+}
+
+.editor-side-panels::-webkit-scrollbar-track {
+  background: #2a2a2a;
+}
+
+.editor-side-panels::-webkit-scrollbar-thumb {
+  background: #4a4a4a;
+  border-radius: 3px;
+}
+
+.editor-side-panels::-webkit-scrollbar-thumb:hover {
+  background: #5a5a5a;
+}
+
+/* Canvas scrollbar styles */
+.editor-canvas-container::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.editor-canvas-container::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+.editor-canvas-container::-webkit-scrollbar-thumb {
+  background: #4a4a4a;
+  border-radius: 4px;
+}
+
+.editor-canvas-container::-webkit-scrollbar-thumb:hover {
+  background: #5a5a5a;
+}
+
+.editor-canvas-container::-webkit-scrollbar-corner {
+  background: #1a1a1a;
 }

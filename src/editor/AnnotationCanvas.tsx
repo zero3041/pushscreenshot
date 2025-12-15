@@ -869,7 +869,10 @@ function createAnnotationFromPoints(
         id,
         type: 'blur',
         points: [startPoint, endPoint],
-        style: baseStyle,
+        style: {
+          ...baseStyle,
+          pixelSize: 10, // Default pixel size, can be made configurable via toolSettings
+        },
       };
 
     default:

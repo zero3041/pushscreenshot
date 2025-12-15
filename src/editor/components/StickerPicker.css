@@ -1,0 +1,111 @@
+/**
+ * StickerPicker Component Styles
+ */
+
+.sticker-picker-panel {
+  background-color: #2a2a2a;
+  border: 1px solid #3a3a3a;
+  border-radius: 8px;
+  padding: 12px;
+  min-width: 280px;
+  max-width: 320px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Category Tabs */
+.sticker-picker-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #3a3a3a;
+}
+
+.sticker-picker-tab {
+  padding: 4px 8px;
+  background-color: transparent;
+  border: 1px solid #4a4a4a;
+  border-radius: 4px;
+  color: #888;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sticker-picker-tab:hover {
+  background-color: #3a3a3a;
+  color: #fff;
+}
+
+.sticker-picker-tab.active {
+  background-color: #4a9eff;
+  border-color: #4a9eff;
+  color: #fff;
+}
+
+/* Sticker Grid */
+.sticker-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* Custom scrollbar */
+.sticker-picker-grid::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sticker-picker-grid::-webkit-scrollbar-track {
+  background: #2a2a2a;
+  border-radius: 3px;
+}
+
+.sticker-picker-grid::-webkit-scrollbar-thumb {
+  background: #4a4a4a;
+  border-radius: 3px;
+}
+
+.sticker-picker-grid::-webkit-scrollbar-thumb:hover {
+  background: #5a5a5a;
+}
+
+/* Sticker Item */
+.sticker-picker-item {
+  width: 48px;
+  height: 48px;
+  padding: 4px;
+  background-color: #3a3a3a;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sticker-picker-item:hover {
+  background-color: #4a4a4a;
+  border-color: #5a5a5a;
+  transform: scale(1.05);
+}
+
+.sticker-picker-item:focus {
+  outline: none;
+  border-color: #4a9eff;
+}
+
+.sticker-picker-item:active {
+  transform: scale(0.95);
+}
+
+/* SVG inside sticker item */
+.sticker-picker-item svg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}

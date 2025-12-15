@@ -29,6 +29,22 @@ export default defineConfig([
         },
       ],
       "no-case-declarations": "off",
+      // Allow re-exports in component files for backwards compatibility
+      "react-refresh/only-export-components": [
+        "warn",
+        {
+          allowExportNames: [
+            "calculateProportionalHeight",
+            "calculateProportionalWidth",
+            "clampDimension",
+            "clampPaddingSize",
+            "clampWatermarkSize",
+            "clampWatermarkOpacity",
+          ],
+        },
+      ],
+      // Allow setState in effects for syncing external props (controlled components pattern)
+      "react-hooks/set-state-in-effect": "off",
     },
   },
 ]);

@@ -1,0 +1,182 @@
+/**
+ * ResizePanel Component Styles
+ * Requirements: 1.1, 1.2
+ */
+
+.resize-panel {
+    display: flex;
+    flex-direction: column;
+    background-color: #2a2a2a;
+    border: 1px solid #3a3a3a;
+    border-radius: 8px;
+    padding: 16px;
+    min-width: 280px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.resize-panel-header {
+    margin-bottom: 16px;
+}
+
+.resize-panel-title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.resize-panel-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.resize-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.resize-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #aaa;
+}
+
+.resize-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.resize-input {
+    flex: 1;
+    padding: 8px 12px;
+    background-color: #1a1a1a;
+    border: 1px solid #3a3a3a;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 14px;
+    font-family: inherit;
+    transition: border-color 0.15s ease;
+}
+
+.resize-input:hover {
+    border-color: #4a4a4a;
+}
+
+.resize-input:focus {
+    outline: none;
+    border-color: #4a9eff;
+    box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.2);
+}
+
+.resize-input::-webkit-inner-spin-button,
+.resize-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.resize-input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+.resize-unit {
+    font-size: 12px;
+    color: #666;
+    min-width: 20px;
+}
+
+.resize-checkbox-group {
+    margin-top: 4px;
+}
+
+.resize-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.resize-checkbox {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.resize-checkbox-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+}
+
+.resize-checkbox-text {
+    font-size: 13px;
+    color: #ccc;
+}
+
+.resize-checkbox-label:hover .resize-checkbox-text {
+    color: #fff;
+}
+
+.resize-info {
+    padding-top: 8px;
+    border-top: 1px solid #3a3a3a;
+}
+
+.resize-info-text {
+    font-size: 11px;
+    color: #666;
+}
+
+.resize-panel-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #3a3a3a;
+}
+
+.resize-button {
+    flex: 1;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+
+.resize-button-cancel {
+    background-color: #3a3a3a;
+    color: #ccc;
+}
+
+.resize-button-cancel:hover {
+    background-color: #4a4a4a;
+    color: #fff;
+}
+
+.resize-button-apply {
+    background-color: #4a9eff;
+    color: #fff;
+}
+
+.resize-button-apply:hover:not(:disabled) {
+    background-color: #3a8eef;
+}
+
+.resize-button-apply:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.resize-button:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.4);
+}

@@ -1,59 +1,148 @@
+/**
+ * Editor Component
+ * Main editor component with annotation tools and export functionality
+ * 
+ * Requirements: All
+ * - Full integration of all annotation tools, panels, and export functionality
+ * - WHEN a user clicks "Copy" THEN the Editor SHALL copy the final image to clipboard
+ * - WHEN a user clicks "Done" THEN the Editor SHALL save/upload the final image and close the editor
+ */
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import type { Annotation, ToolType, ToolSettings, Point } from '../types';
+// Use editor types for Toolbar
+import type { ToolType, ToolSettings, WatermarkConfig, BrowserFrameConfig, PaddingConfig } from './types/editor';
+import { DEFAULT_TOOL_SETTINGS } from './types/editor';
+// Use shared types for AnnotationCanvas compatibility
+import type { Annotation, ToolType as SharedToolType, ToolSettings as SharedToolSettings } from '../types';
 import Toolbar from './Toolbar';
 import AnnotationCanvas from './AnnotationCanvas';
+import type { AnnotationCanvasRef } from './AnnotationCanvas';
 import { uploadToImgBB } from '../services/messaging';
+import { useHistory } from './hooks/useHistory';
+import { useRecentColors } from './hooks/useRecentColors';
+import { useZoom } from './hooks/useZoom';
+import { restartSequence } from './tools/SequenceTool';
+import { setSelectedSticker } from './tools/StickerTool';
+import type { StickerItem } from './assets/stickers';
+import {
+  ResizePanel,
+  WatermarkPanel,
+  BrowserFramePanel,
+  PaddingPanel,
+} from './components';
+import { resizeImage } from './tools/ResizeTool';
+import { cropImage, type CropSelection } from './tools/CropTool';
+import {
+  exportCanvasWithEffects,
+  applyExportEffects,
+  copyImageToClipboard,
+  downloadImage,
+  generateTimestampFilename,
+  type ExportConfig,
+} from './utils/export';
+import './editor.css';
 
-const defaultToolSettings: ToolSettings = {
-  color: '#ff0000',
-  strokeWidth: 3,
-  fontSize: 16,
-};
+// Convert editor ToolType to shared ToolType for AnnotationCanvas
+function toSharedToolType(tool: ToolType): SharedToolType {
+  // Map new tool types to closest shared equivalents
+  const sharedTools: SharedToolType[] = ['select', 'rectangle', 'arrow', 'text', 'blur'];
+  if (sharedTools.includes(tool as SharedToolType)) {
+    return tool as SharedToolType;
+  }
+  
+  // Map new tools to closest shared equivalents
+  if (['ellipse', 'curve', 'highlight', 'resize', 'crop'].includes(tool)) {
+    return 'rectangle';
+  }
+  if (['big_head_arrow', 'line_arrow', 'bezier_arrow', 'line'].includes(tool)) {
+    return 'arrow';
+  }
+  if (['callout', 'list'].includes(tool)) {
+    return 'text';
+  }
+  
+  return 'select';
+}
+
+// Convert editor ToolSettings to shared ToolSettings
+function toSharedToolSettings(settings: ToolSettings): SharedToolSettings {
+  return {
+    color: settings.color,
+    strokeWidth: settings.strokeWidth,
+    fontSize: settings.fontSize,
+  };
+}
 
 const Editor: React.FC = () => {
   const [imageData, setImageData] = useState<string>('');
-  const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [selectedTool, setSelectedTool] = useState<ToolType>('select');
-  const [toolSettings, setToolSettings] = useState<ToolSettings>(defaultToolSettings);
+  const [toolSettings, setToolSettings] = useState<ToolSettings>(DEFAULT_TOOL_SETTINGS);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>('');
   const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
   const [isUploading, setIsUploading] = useState(false);
   const [uploadResult, setUploadResult] = useState<{ url: string; deleteUrl: string } | null>(null);
+  const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<AnnotationCanvasRef>(null);
+
+  // Export effect configurations
+  const [watermarkConfig, setWatermarkConfig] = useState<WatermarkConfig | null>(null);
+  const [browserFrameConfig, setBrowserFrameConfig] = useState<BrowserFrameConfig | null>(null);
+  const [paddingConfig, setPaddingConfig] = useState<PaddingConfig | null>(null);
+
+  // Panel visibility states
+  const [showResizePanel, setShowResizePanel] = useState(false);
+  const [showWatermarkPanel, setShowWatermarkPanel] = useState(false);
+  const [showBrowserFramePanel, setShowBrowserFramePanel] = useState(false);
+  const [showPaddingPanel, setShowPaddingPanel] = useState(false);
+
+  // Crop state
+  const [isCropping, setIsCropping] = useState(false);
+  const [cropSelection, setCropSelection] = useState<CropSelection | null>(null);
+
+  // Use history hook for undo/redo
+  const {
+    state: annotations,
+    pushState: pushAnnotations,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    clear: _clearHistory,
+  } = useHistory<Annotation[]>([]);
+
+  // Use recent colors hook
+  const { recentColors, addRecentColor } = useRecentColors();
+
+  // Use zoom hook
+  const { zoom, zoomIn, zoomOut, resetZoom, canZoomIn, canZoomOut } = useZoom();
 
   // Load image from URL params or storage
   useEffect(() => {
     const loadImage = async () => {
       try {
-        // Check URL params first
         const urlParams = new URLSearchParams(window.location.search);
         const imageUrl = urlParams.get('image');
         
         if (imageUrl) {
-          // Image passed via URL param (base64 data URL)
           setImageData(decodeURIComponent(imageUrl));
           setIsLoading(false);
           return;
         }
 
-        // Check for image in chrome.storage.local
         if (typeof chrome !== 'undefined' && chrome.storage) {
-          // Try editorImage first (from popup capture)
           const result = await chrome.storage.local.get(['editorImage', 'tempCapture']);
           
           if (result.editorImage && typeof result.editorImage === 'string') {
             setImageData(result.editorImage);
-            // Clear the stored image after loading
             await chrome.storage.local.remove('editorImage');
             setIsLoading(false);
             return;
           }
           
-          // Fallback to tempCapture (from keyboard shortcuts)
           if (result.tempCapture && typeof result.tempCapture === 'string') {
             setImageData(result.tempCapture);
-            // Clear the stored image after loading
             await chrome.storage.local.remove('tempCapture');
             setIsLoading(false);
             return;
@@ -84,22 +173,59 @@ const Editor: React.FC = () => {
 
   // Add annotation
   const addAnnotation = useCallback((annotation: Annotation) => {
-    setAnnotations(prev => [...prev, annotation]);
-  }, []);
+    pushAnnotations([...annotations, annotation], 'add');
+  }, [annotations, pushAnnotations]);
 
-  // Undo last annotation
+  // Handle undo
   const handleUndo = useCallback(() => {
-    setAnnotations(prev => prev.slice(0, -1));
-  }, []);
+    undo();
+  }, [undo]);
+
+  // Handle redo
+  const handleRedo = useCallback(() => {
+    redo();
+  }, [redo]);
 
   // Clear all annotations
   const handleClearAll = useCallback(() => {
-    setAnnotations([]);
-  }, []);
+    if (annotations.length > 0) {
+      pushAnnotations([], 'clear');
+    }
+  }, [annotations.length, pushAnnotations]);
+
+  // Delete selected annotation
+  const handleDeleteSelected = useCallback(() => {
+    if (selectedAnnotationId) {
+      const newAnnotations = annotations.filter(a => a.id !== selectedAnnotationId);
+      pushAnnotations(newAnnotations, 'delete');
+      setSelectedAnnotationId(null);
+    }
+  }, [selectedAnnotationId, annotations, pushAnnotations]);
 
   // Handle tool change
   const handleToolChange = useCallback((tool: ToolType) => {
     setSelectedTool(tool);
+    // Clear selection when changing tools (except select)
+    if (tool !== 'select') {
+      setSelectedAnnotationId(null);
+    }
+    
+    // Handle special tool actions
+    if (tool === 'resize') {
+      setShowResizePanel(true);
+    } else if (tool === 'crop') {
+      setIsCropping(true);
+    }
+    // Note: insert_image is handled directly by the tool when clicking on canvas
+    
+    // Close panels when switching to other tools
+    if (tool !== 'resize') {
+      setShowResizePanel(false);
+    }
+    if (tool !== 'crop') {
+      setIsCropping(false);
+      setCropSelection(null);
+    }
   }, []);
 
   // Handle tool settings change
@@ -107,43 +233,138 @@ const Editor: React.FC = () => {
     setToolSettings(prev => ({ ...prev, ...settings }));
   }, []);
 
-  // Export final image with annotations
-  const handleExport = useCallback(async () => {
+  // Handle sticker selection
+  const handleStickerSelect = useCallback((sticker: StickerItem) => {
+    setSelectedSticker(sticker);
+    setSelectedTool('sticker');
+  }, []);
+
+  // Handle restart sequence
+  const handleRestartSequence = useCallback(() => {
+    restartSequence();
+  }, []);
+
+  // Handle resize
+  const handleResize = useCallback(async (newWidth: number, newHeight: number) => {
     if (!imageData) return;
 
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    try {
+      const result = await resizeImage(imageData, {
+        width: newWidth,
+        height: newHeight,
+      });
 
-    const img = new Image();
-    img.src = imageData;
-    
-    await new Promise<void>((resolve) => {
-      img.onload = () => resolve();
-    });
+      setImageData(result.imageData);
+      setImageDimensions({ width: result.width, height: result.height });
+      setShowResizePanel(false);
+      setSelectedTool('select');
+    } catch (err) {
+      console.error('Failed to resize image:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to resize image';
+      setError(errorMessage);
+    }
+  }, [imageData]);
 
-    canvas.width = img.width;
-    canvas.height = img.height;
-    ctx.drawImage(img, 0, 0);
+  // Handle resize cancel
+  const handleResizeCancel = useCallback(() => {
+    setShowResizePanel(false);
+    setSelectedTool('select');
+  }, []);
 
-    // Draw annotations on the canvas
-    drawAnnotationsToContext(ctx, annotations, img.width, img.height);
+  // Handle crop apply
+  const handleCropApply = useCallback(async () => {
+    if (!imageData || !cropSelection) return;
 
-    return canvas.toDataURL('image/png');
-  }, [imageData, annotations]);
+    try {
+      const result = await cropImage(
+        imageData,
+        { selection: cropSelection },
+        imageDimensions.width,
+        imageDimensions.height
+      );
 
-  // Download image
+      setImageData(result.imageData);
+      setImageDimensions({ width: result.width, height: result.height });
+      setIsCropping(false);
+      setCropSelection(null);
+      setSelectedTool('select');
+    } catch (err) {
+      console.error('Failed to crop image:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to crop image';
+      setError(errorMessage);
+    }
+  }, [imageData, cropSelection, imageDimensions]);
+
+  // Handle crop cancel
+  const handleCropCancel = useCallback(() => {
+    setIsCropping(false);
+    setCropSelection(null);
+    setSelectedTool('select');
+  }, []);
+
+  // Toggle watermark panel
+  const handleToggleWatermarkPanel = useCallback(() => {
+    setShowWatermarkPanel(prev => !prev);
+    setShowBrowserFramePanel(false);
+    setShowPaddingPanel(false);
+  }, []);
+
+  // Toggle browser frame panel
+  const handleToggleBrowserFramePanel = useCallback(() => {
+    setShowBrowserFramePanel(prev => !prev);
+    setShowWatermarkPanel(false);
+    setShowPaddingPanel(false);
+  }, []);
+
+  // Toggle padding panel
+  const handleTogglePaddingPanel = useCallback(() => {
+    setShowPaddingPanel(prev => !prev);
+    setShowWatermarkPanel(false);
+    setShowBrowserFramePanel(false);
+  }, []);
+
+  // Build export configuration from current state
+  const getExportConfig = useCallback((): ExportConfig => {
+    return {
+      watermark: watermarkConfig,
+      browserFrame: browserFrameConfig,
+      padding: paddingConfig,
+      format: 'image/png',
+      quality: 0.92,
+    };
+  }, [watermarkConfig, browserFrameConfig, paddingConfig]);
+
+  // Export final image with annotations and all effects
+  const handleExport = useCallback(async (): Promise<string | null> => {
+    if (!imageData) return null;
+
+    try {
+      const fabricCanvas = canvasRef.current?.getCanvas();
+      const exportConfig = getExportConfig();
+
+      if (fabricCanvas) {
+        // Export using Fabric.js canvas (includes all annotations)
+        const result = await exportCanvasWithEffects(fabricCanvas, exportConfig);
+        return result.dataUrl;
+      } else {
+        // Fallback: export base image with effects only
+        const result = await applyExportEffects(imageData, exportConfig);
+        return result.dataUrl;
+      }
+    } catch (err) {
+      console.error('Failed to export image:', err);
+      setError('Failed to export image. Please try again.');
+      return null;
+    }
+  }, [imageData, getExportConfig]);
+
+  // Download image with timestamp filename
   const handleDownload = useCallback(async () => {
     const dataUrl = await handleExport();
     if (!dataUrl) return;
 
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-    const filename = `screenshot_${timestamp}.png`;
-
-    const link = document.createElement('a');
-    link.href = dataUrl;
-    link.download = filename;
-    link.click();
+    const filename = generateTimestampFilename('screenshot', 'png');
+    downloadImage(dataUrl, filename);
   }, [handleExport]);
 
   // Copy to clipboard
@@ -152,13 +373,10 @@ const Editor: React.FC = () => {
     if (!dataUrl) return;
 
     try {
-      const response = await fetch(dataUrl);
-      const blob = await response.blob();
-      await navigator.clipboard.write([
-        new ClipboardItem({ 'image/png': blob })
-      ]);
+      await copyImageToClipboard(dataUrl);
     } catch (err) {
       console.error('Failed to copy to clipboard:', err);
+      setError('Cannot copy to clipboard. Please try downloading instead.');
     }
   }, [handleExport]);
 
@@ -179,7 +397,6 @@ const Editor: React.FC = () => {
           url: result.data.data.url,
           deleteUrl: result.data.data.delete_url,
         });
-        // Auto-copy URL to clipboard
         await navigator.clipboard.writeText(result.data.data.url);
       } else {
         setError(result.error || 'Upload failed');
@@ -192,6 +409,30 @@ const Editor: React.FC = () => {
     }
   }, [handleExport]);
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Undo: Ctrl+Z
+      if (e.ctrlKey && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        handleUndo();
+      }
+      // Redo: Ctrl+Y or Ctrl+Shift+Z
+      if ((e.ctrlKey && e.key === 'y') || (e.ctrlKey && e.shiftKey && e.key === 'z')) {
+        e.preventDefault();
+        handleRedo();
+      }
+      // Delete: Delete or Backspace
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedAnnotationId) {
+        e.preventDefault();
+        handleDeleteSelected();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleUndo, handleRedo, handleDeleteSelected, selectedAnnotationId]);
+
   if (isLoading) {
     return (
       <div className="editor editor-loading">
@@ -201,7 +442,7 @@ const Editor: React.FC = () => {
     );
   }
 
-  if (error) {
+  if (error && !imageData) {
     return (
       <div className="editor editor-error">
         <p>{error}</p>
@@ -217,12 +458,32 @@ const Editor: React.FC = () => {
         onToolChange={handleToolChange}
         onSettingsChange={handleSettingsChange}
         onUndo={handleUndo}
+        onRedo={handleRedo}
         onClearAll={handleClearAll}
+        onDeleteSelected={handleDeleteSelected}
+        canUndo={canUndo}
+        canRedo={canRedo}
+        hasSelection={selectedAnnotationId !== null}
         onDownload={handleDownload}
         onCopy={handleCopy}
         onUpload={handleUpload}
-        canUndo={annotations.length > 0}
         isUploading={isUploading}
+        zoom={zoom}
+        onZoomIn={zoomIn}
+        onZoomOut={zoomOut}
+        onResetZoom={resetZoom}
+        canZoomIn={canZoomIn}
+        canZoomOut={canZoomOut}
+        recentColors={recentColors}
+        onColorUsed={addRecentColor}
+        onStickerSelect={handleStickerSelect}
+        onRestartSequence={handleRestartSequence}
+        onToggleWatermark={handleToggleWatermarkPanel}
+        onToggleBrowserFrame={handleToggleBrowserFramePanel}
+        onTogglePadding={handleTogglePaddingPanel}
+        showWatermarkPanel={showWatermarkPanel}
+        showBrowserFramePanel={showBrowserFramePanel}
+        showPaddingPanel={showPaddingPanel}
       />
       
       {/* Upload result notification */}
@@ -241,146 +502,88 @@ const Editor: React.FC = () => {
           <span>⚠ {error}</span>
         </div>
       )}
-      
-      <div className="editor-canvas-container">
-        <AnnotationCanvas
-          imageData={imageData}
-          annotations={annotations}
-          selectedTool={selectedTool}
-          toolSettings={toolSettings}
-          onAddAnnotation={addAnnotation}
-          imageDimensions={imageDimensions}
-        />
+
+      <div className="editor-main-content">
+        {/* Side Panels */}
+        <div className="editor-side-panels">
+          {/* Resize Panel */}
+          {showResizePanel && (
+            <ResizePanel
+              currentWidth={imageDimensions.width}
+              currentHeight={imageDimensions.height}
+              onResize={handleResize}
+              onCancel={handleResizeCancel}
+            />
+          )}
+
+          {/* Watermark Panel */}
+          {showWatermarkPanel && (
+            <WatermarkPanel
+              config={watermarkConfig}
+              onChange={setWatermarkConfig}
+            />
+          )}
+
+          {/* Browser Frame Panel */}
+          {showBrowserFramePanel && (
+            <BrowserFramePanel
+              config={browserFrameConfig}
+              onChange={setBrowserFrameConfig}
+              pageUrl={typeof window !== 'undefined' ? window.location.href : ''}
+            />
+          )}
+
+          {/* Padding Panel */}
+          {showPaddingPanel && (
+            <PaddingPanel
+              config={paddingConfig}
+              onChange={setPaddingConfig}
+              recentColors={recentColors}
+              onColorUsed={addRecentColor}
+            />
+          )}
+        </div>
+
+        {/* Canvas Container */}
+        <div className="editor-canvas-container">
+          {/* Crop overlay */}
+          {isCropping && (
+            <div className="crop-overlay">
+              <div className="crop-instructions">
+                Click and drag to select crop area
+              </div>
+              <div className="crop-actions">
+                <button 
+                  className="crop-btn crop-btn-cancel"
+                  onClick={handleCropCancel}
+                >
+                  Cancel
+                </button>
+                <button 
+                  className="crop-btn crop-btn-apply"
+                  onClick={handleCropApply}
+                  disabled={!cropSelection}
+                >
+                  Apply Crop
+                </button>
+              </div>
+            </div>
+          )}
+          
+          <AnnotationCanvas
+            ref={canvasRef}
+            imageData={imageData}
+            annotations={annotations}
+            selectedTool={toSharedToolType(selectedTool)}
+            toolSettings={toSharedToolSettings(toolSettings)}
+            onAddAnnotation={addAnnotation}
+            imageDimensions={imageDimensions}
+            zoom={zoom}
+          />
+        </div>
       </div>
     </div>
   );
 };
-
-// Helper function to draw annotations to a canvas context
-function drawAnnotationsToContext(
-  ctx: CanvasRenderingContext2D,
-  annotations: Annotation[],
-  _canvasWidth: number,
-  _canvasHeight: number
-) {
-  annotations.forEach(annotation => {
-    ctx.strokeStyle = annotation.style.color;
-    ctx.fillStyle = annotation.style.color;
-    ctx.lineWidth = annotation.style.strokeWidth;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-
-    switch (annotation.type) {
-      case 'rectangle':
-        drawRectangle(ctx, annotation.points);
-        break;
-      case 'arrow':
-        drawArrow(ctx, annotation.points);
-        break;
-      case 'text':
-        drawText(ctx, annotation);
-        break;
-      case 'blur':
-        drawBlur(ctx, annotation.points);
-        break;
-    }
-  });
-}
-
-function drawRectangle(ctx: CanvasRenderingContext2D, points: Point[]) {
-  if (points.length < 2) return;
-  const [start, end] = points;
-  const width = end.x - start.x;
-  const height = end.y - start.y;
-  ctx.strokeRect(start.x, start.y, width, height);
-}
-
-function drawArrow(ctx: CanvasRenderingContext2D, points: Point[]) {
-  if (points.length < 2) return;
-  const [start, end] = points;
-  
-  // Draw line
-  ctx.beginPath();
-  ctx.moveTo(start.x, start.y);
-  ctx.lineTo(end.x, end.y);
-  ctx.stroke();
-
-  // Draw arrowhead
-  const angle = Math.atan2(end.y - start.y, end.x - start.x);
-  const headLength = 15;
-  
-  ctx.beginPath();
-  ctx.moveTo(end.x, end.y);
-  ctx.lineTo(
-    end.x - headLength * Math.cos(angle - Math.PI / 6),
-    end.y - headLength * Math.sin(angle - Math.PI / 6)
-  );
-  ctx.moveTo(end.x, end.y);
-  ctx.lineTo(
-    end.x - headLength * Math.cos(angle + Math.PI / 6),
-    end.y - headLength * Math.sin(angle + Math.PI / 6)
-  );
-  ctx.stroke();
-}
-
-function drawText(ctx: CanvasRenderingContext2D, annotation: Annotation) {
-  if (annotation.points.length < 1 || !annotation.style.text) return;
-  const [position] = annotation.points;
-  ctx.font = `${annotation.style.fontSize || 16}px sans-serif`;
-  ctx.fillText(annotation.style.text, position.x, position.y);
-}
-
-function drawBlur(
-  ctx: CanvasRenderingContext2D,
-  points: Point[]
-) {
-  if (points.length < 2) return;
-  const [start, end] = points;
-  const x = Math.min(start.x, end.x);
-  const y = Math.min(start.y, end.y);
-  const width = Math.abs(end.x - start.x);
-  const height = Math.abs(end.y - start.y);
-
-  if (width <= 0 || height <= 0) return;
-
-  // Get the image data for the selected area
-  const imageData = ctx.getImageData(x, y, width, height);
-  const data = imageData.data;
-
-  // Apply pixelation blur effect
-  const pixelSize = 10;
-  for (let py = 0; py < height; py += pixelSize) {
-    for (let px = 0; px < width; px += pixelSize) {
-      // Get average color for this block
-      let r = 0, g = 0, b = 0, count = 0;
-      
-      for (let dy = 0; dy < pixelSize && py + dy < height; dy++) {
-        for (let dx = 0; dx < pixelSize && px + dx < width; dx++) {
-          const i = ((py + dy) * width + (px + dx)) * 4;
-          r += data[i];
-          g += data[i + 1];
-          b += data[i + 2];
-          count++;
-        }
-      }
-      
-      r = Math.round(r / count);
-      g = Math.round(g / count);
-      b = Math.round(b / count);
-
-      // Set all pixels in this block to the average color
-      for (let dy = 0; dy < pixelSize && py + dy < height; dy++) {
-        for (let dx = 0; dx < pixelSize && px + dx < width; dx++) {
-          const i = ((py + dy) * width + (px + dx)) * 4;
-          data[i] = r;
-          data[i + 1] = g;
-          data[i + 2] = b;
-        }
-      }
-    }
-  }
-
-  ctx.putImageData(imageData, x, y);
-}
 
 export default Editor;
