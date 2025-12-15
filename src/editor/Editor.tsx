@@ -122,36 +122,52 @@ const Editor: React.FC = () => {
   useEffect(() => {
     const loadImage = async () => {
       try {
+        console.log('Editor: Starting to load image...');
         const urlParams = new URLSearchParams(window.location.search);
         const imageUrl = urlParams.get('image');
         
+        let loadedImageData: string | null = null;
+        
         if (imageUrl) {
-          setImageData(decodeURIComponent(imageUrl));
+          loadedImageData = decodeURIComponent(imageUrl);
+          console.log('Editor: Loaded image from URL param');
+        } else if (typeof chrome !== 'undefined' && chrome.storage) {
+          const result = await chrome.storage.local.get(['editorImage', 'tempCapture']);
+          console.log('Editor: Storage result keys:', Object.keys(result));
+          
+          if (result.editorImage && typeof result.editorImage === 'string') {
+            loadedImageData = result.editorImage;
+            await chrome.storage.local.remove('editorImage');
+            console.log('Editor: Loaded image from editorImage storage');
+          } else if (result.tempCapture && typeof result.tempCapture === 'string') {
+            loadedImageData = result.tempCapture;
+            await chrome.storage.local.remove('tempCapture');
+            console.log('Editor: Loaded image from tempCapture storage');
+          }
+        }
+
+        if (!loadedImageData) {
+          setError('No image to edit. Please capture a screenshot first.');
           setIsLoading(false);
           return;
         }
 
-        if (typeof chrome !== 'undefined' && chrome.storage) {
-          const result = await chrome.storage.local.get(['editorImage', 'tempCapture']);
-          
-          if (result.editorImage && typeof result.editorImage === 'string') {
-            setImageData(result.editorImage);
-            await chrome.storage.local.remove('editorImage');
-            setIsLoading(false);
-            return;
-          }
-          
-          if (result.tempCapture && typeof result.tempCapture === 'string') {
-            setImageData(result.tempCapture);
-            await chrome.storage.local.remove('tempCapture');
-            setIsLoading(false);
-            return;
-          }
-        }
+        // Load image to get dimensions BEFORE setting state
+        const img = new Image();
+        await new Promise<void>((resolve, reject) => {
+          img.onload = () => resolve();
+          img.onerror = () => reject(new Error('Failed to load image'));
+          img.src = loadedImageData!;
+        });
 
-        setError('No image to edit. Please capture a screenshot first.');
+        console.log('Editor: Image loaded, dimensions:', img.width, 'x', img.height);
+
+        // Set both imageData and dimensions together
+        setImageDimensions({ width: img.width, height: img.height });
+        setImageData(loadedImageData);
         setIsLoading(false);
-      } catch {
+      } catch (err) {
+        console.error('Editor: Failed to load image:', err);
         setError('Failed to load image');
         setIsLoading(false);
       }
@@ -159,17 +175,6 @@ const Editor: React.FC = () => {
 
     loadImage();
   }, []);
-
-  // Calculate image dimensions when image loads
-  useEffect(() => {
-    if (!imageData) return;
-
-    const img = new Image();
-    img.onload = () => {
-      setImageDimensions({ width: img.width, height: img.height });
-    };
-    img.src = imageData;
-  }, [imageData]);
 
   // Add annotation
   const addAnnotation = useCallback((annotation: Annotation) => {

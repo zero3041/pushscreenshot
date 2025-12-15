@@ -13,19 +13,9 @@
  */
 
 import * as fabric from 'fabric';
-import type {
-    BaseTool,
-    ToolMouseEvent,
-    ToolState,
-    DrawResult
-} from './index';
-import {
-    toolRegistry,
-    generateAnnotationId,
-    createAnnotationStyle,
-    createTransform,
-    hasMinimumSize,
-} from './index';
+import type { BaseTool, ToolMouseEvent, ToolState, DrawResult } from './registry';
+import { toolRegistry } from './registry';
+import { generateAnnotationId, createAnnotationStyle, createTransform, hasMinimumSize } from './helpers';
 import type { ToolSettings, ArrowAnnotation } from '../types/editor';
 
 /**

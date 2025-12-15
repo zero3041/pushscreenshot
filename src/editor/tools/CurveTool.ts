@@ -14,19 +14,14 @@
 
 import * as fabric from 'fabric';
 import type { Point } from '../../types';
-import type {
-    BaseTool,
-    ToolMouseEvent,
-    ToolState,
-    DrawResult
-} from './index';
+import type { BaseTool, ToolMouseEvent, ToolState, DrawResult } from './registry';
+import { toolRegistry } from './registry';
 import {
-    toolRegistry,
     generateAnnotationId,
     createAnnotationStyle,
     createTransform,
     getCommonFabricOptions,
-} from './index';
+} from './helpers';
 import type { ToolSettings, PathAnnotation } from '../types/editor';
 
 /**

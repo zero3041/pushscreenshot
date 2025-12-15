@@ -13,17 +13,9 @@
 
 import * as fabric from 'fabric';
 import type { Point } from '../../types';
-import type {
-    BaseTool,
-    ToolMouseEvent,
-    ToolState,
-    DrawResult
-} from './index';
-import {
-    toolRegistry,
-    generateAnnotationId,
-    createTransform,
-} from './index';
+import type { BaseTool, ToolMouseEvent, ToolState, DrawResult } from './registry';
+import { toolRegistry } from './registry';
+import { generateAnnotationId, createTransform } from './helpers';
 import type { ToolSettings, PathAnnotation, AnnotationStyle } from '../types/editor';
 
 /**

@@ -1,28 +1,12 @@
 /**
  * AnnotationCanvas Component - Fabric.js Based Canvas
- * 
- * Refactored to use Fabric.js for canvas manipulation including:
- * - Object selection, resize, rotate
- * - Layer system (base image, annotations, preview)
- * - Zoom and pan support
- * 
- * Requirements: 2.1, 2.2
- * - Drawing rectangles and ellipses with configurable stroke color and width
+ * Simplified version with minimal useEffect usage
  */
 
 import React, { useRef, useEffect, useState, useCallback, useImperativeHandle, forwardRef } from 'react';
 import * as fabric from 'fabric';
-// Import types from the shared types module (used by Editor.tsx)
-import type { 
-  ToolType, 
-  ToolSettings, 
-  Point, 
-  Annotation,
-} from '../types';
-// Import extended types from editor types for internal use
-import type { 
-  ToolSettings as EditorToolSettings,
-} from './types/editor';
+import type { ToolType, ToolSettings, Point, Annotation } from '../types';
+import type { ToolSettings as EditorToolSettings } from './types/editor';
 
 // Extended Fabric object with custom properties
 interface ExtendedFabricObject extends fabric.FabricObject {
@@ -42,78 +26,30 @@ function getToolSettingValue<K extends keyof EditorToolSettings>(
   return defaultValue;
 }
 
-// ============================================================================
-// Types
-// ============================================================================
-
 export interface AnnotationCanvasProps {
-  /** Base64 image data to display */
   imageData: string;
-  /** List of annotations to render */
   annotations: Annotation[];
-  /** Currently selected tool */
   selectedTool: ToolType;
-  /** Current tool settings (color, stroke width, etc.) */
   toolSettings: ToolSettings;
-  /** Callback when a new annotation is added */
   onAddAnnotation: (annotation: Annotation) => void;
-  /** Callback when an annotation is selected */
   onSelectAnnotation?: (annotationId: string | null) => void;
-  /** Callback when an annotation is modified */
   onModifyAnnotation?: (annotation: Annotation) => void;
-  /** Image dimensions */
   imageDimensions: { width: number; height: number };
-  /** Current zoom level (1.0 = 100%) */
   zoom?: number;
-  /** Pan offset */
   panOffset?: { x: number; y: number };
 }
 
 export interface AnnotationCanvasRef {
-  /** Get the Fabric.js canvas instance */
   getCanvas: () => fabric.Canvas | null;
-  /** Export canvas as data URL */
   toDataURL: (format?: string, quality?: number) => string | null;
-  /** Clear all annotations */
   clearAnnotations: () => void;
-  /** Delete selected annotation */
   deleteSelected: () => void;
-  /** Select an annotation by ID */
   selectAnnotation: (id: string) => void;
-  /** Deselect all */
   deselectAll: () => void;
 }
 
-// ============================================================================
-// Constants
-// ============================================================================
+const ANNOTATION_LAYER = 'annotation';
 
-const ANNOTATION_LAYER_NAME = 'annotation';
-const BASE_IMAGE_LAYER_NAME = 'baseImage';
-
-// Helper to get layer name from fabric object
-function getLayerName(obj: fabric.FabricObject): string | undefined {
-  return (obj as ExtendedFabricObject).layerName;
-}
-
-// Helper to set layer name on fabric object
-function setLayerName(obj: fabric.FabricObject, name: string): void {
-  (obj as ExtendedFabricObject).layerName = name;
-}
-
-// Helper to get annotation ID from fabric object
-function getAnnotationId(obj: fabric.FabricObject): string | undefined {
-  return (obj as ExtendedFabricObject).annotationId;
-}
-
-// Helper to set annotation ID on fabric object
-function setAnnotationId(obj: fabric.FabricObject, id: string): void {
-  (obj as ExtendedFabricObject).annotationId = id;
-}
-
-// ============================================================================
-// Component
-// ============================================================================
 
 const AnnotationCanvas = forwardRef<AnnotationCanvasRef, AnnotationCanvasProps>((props, ref) => {
   const {
@@ -122,399 +58,229 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasRef, AnnotationCanvasProps>(
     selectedTool,
     toolSettings,
     onAddAnnotation,
-    onSelectAnnotation,
-    onModifyAnnotation,
     imageDimensions,
     zoom = 1,
-    panOffset = { x: 0, y: 0 },
   } = props;
 
-  // Refs
-  const containerRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const fabricCanvasRef = useRef<fabric.Canvas | null>(null);
+  const canvasElRef = useRef<HTMLCanvasElement>(null);
+  const fabricRef = useRef<fabric.Canvas | null>(null);
   const baseImageRef = useRef<fabric.FabricImage | null>(null);
-
-  // State
+  const [isReady, setIsReady] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
   const [startPoint, setStartPoint] = useState<Point | null>(null);
-  const [previewObject, setPreviewObject] = useState<fabric.FabricObject | null>(null);
-  const [textInput, setTextInput] = useState<{ visible: boolean; position: Point; value: string }>({
-    visible: false,
-    position: { x: 0, y: 0 },
-    value: '',
-  });
-  // Track canvas initialization with a counter to trigger re-renders when canvas is ready
-  const [canvasVersion, setCanvasVersion] = useState(0);
+  const [previewObj, setPreviewObj] = useState<fabric.FabricObject | null>(null);
+  const [textInput, setTextInput] = useState({ visible: false, x: 0, y: 0, value: '' });
 
-  // ============================================================================
-  // Initialize Fabric.js Canvas
-  // ============================================================================
-
+  // Initialize canvas once
   useEffect(() => {
-    if (!canvasRef.current || fabricCanvasRef.current) return;
+    if (!canvasElRef.current || fabricRef.current) return;
 
-    // Create Fabric.js canvas
-    const canvas = new fabric.Canvas(canvasRef.current, {
-      selection: selectedTool === 'select',
+    const canvas = new fabric.Canvas(canvasElRef.current, {
+      selection: true,
       preserveObjectStacking: true,
       renderOnAddRemove: true,
-      stopContextMenu: true,
-      fireRightClick: true,
     });
+    fabricRef.current = canvas;
+    setIsReady(true);
 
-    fabricCanvasRef.current = canvas;
-    
-    // Use setTimeout to defer state update and avoid synchronous setState in effect
-    const timeoutId = setTimeout(() => {
-      setCanvasVersion(v => v + 1);
-    }, 0);
-
-    // Cleanup on unmount
     return () => {
-      clearTimeout(timeoutId);
       canvas.dispose();
-      fabricCanvasRef.current = null;
+      fabricRef.current = null;
     };
-  }, [selectedTool]);
+  }, []);
 
-  // ============================================================================
-  // Load Base Image
-  // ============================================================================
-
+  // Load base image when imageData changes
   useEffect(() => {
-    const canvas = fabricCanvasRef.current;
-    if (!canvas || !imageData) return;
+    const canvas = fabricRef.current;
+    if (!canvas || !imageData || !isReady) return;
 
-    // Remove existing base image
+    // Remove old base image
     if (baseImageRef.current) {
       canvas.remove(baseImageRef.current);
       baseImageRef.current = null;
     }
 
-    // Load new image
-    const loadImage = async () => {
-      try {
-        const img = await fabric.FabricImage.fromURL(imageData, {
-          crossOrigin: 'anonymous',
-        });
+    // Load image
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const w = img.width || imageDimensions.width || 800;
+      const h = img.height || imageDimensions.height || 600;
+      
+      canvas.setDimensions({ width: w, height: h });
 
-        // Set canvas dimensions to match image
-        canvas.setDimensions({
-          width: img.width || imageDimensions.width,
-          height: img.height || imageDimensions.height,
-        });
-
-        // Configure base image
-        img.set({
-          selectable: false,
-          evented: false,
-          name: BASE_IMAGE_LAYER_NAME,
-          // Lock the base image
-          lockMovementX: true,
-          lockMovementY: true,
-          lockRotation: true,
-          lockScalingX: true,
-          lockScalingY: true,
-          hasControls: false,
-          hasBorders: false,
-        });
-
-        // Add to canvas at the bottom
-        canvas.add(img);
-        canvas.sendObjectToBack(img);
-        baseImageRef.current = img;
-
-        canvas.renderAll();
-      } catch (error) {
-        console.error('Failed to load base image:', error);
-      }
+      fabric.FabricImage.fromURL(imageData, { crossOrigin: 'anonymous' })
+        .then((fabricImg) => {
+          fabricImg.set({
+            left: 0,
+            top: 0,
+            selectable: false,
+            evented: false,
+            lockMovementX: true,
+            lockMovementY: true,
+          });
+          canvas.add(fabricImg);
+          canvas.sendObjectToBack(fabricImg);
+          baseImageRef.current = fabricImg;
+          canvas.renderAll();
+        })
+        .catch((err) => console.error('Failed to load fabric image:', err));
     };
+    img.onerror = () => console.error('Failed to load HTML image');
+    img.src = imageData;
+  }, [imageData, isReady, imageDimensions]);
 
-    loadImage();
-  }, [imageData, canvasVersion, imageDimensions]);
-
-  // ============================================================================
-  // Handle Zoom
-  // ============================================================================
-
+  // Update zoom
   useEffect(() => {
-    const canvas = fabricCanvasRef.current;
-    if (!canvas) return;
-
+    const canvas = fabricRef.current;
+    if (!canvas || !isReady) return;
     canvas.setZoom(zoom);
-    
-    // Update canvas viewport dimensions
-    const vpt = canvas.viewportTransform;
-    if (vpt) {
-      vpt[4] = panOffset.x;
-      vpt[5] = panOffset.y;
-      canvas.setViewportTransform(vpt);
-    }
-
     canvas.renderAll();
-  }, [zoom, panOffset, canvasVersion]);
+  }, [zoom, isReady]);
 
-  // ============================================================================
-  // Handle Tool Selection Mode
-  // ============================================================================
-
+  // Update tool mode
   useEffect(() => {
-    const canvas = fabricCanvasRef.current;
-    if (!canvas) return;
-
-    const isSelectMode = selectedTool === 'select';
+    const canvas = fabricRef.current;
+    if (!canvas || !isReady) return;
     
-    canvas.selection = isSelectMode;
-    canvas.defaultCursor = isSelectMode ? 'default' : 'crosshair';
+    const isSelect = selectedTool === 'select';
+    canvas.selection = isSelect;
+    canvas.defaultCursor = isSelect ? 'default' : 'crosshair';
+    
+    canvas.getObjects().forEach((obj) => {
+      const ext = obj as ExtendedFabricObject;
+      if (ext.layerName === ANNOTATION_LAYER) {
+        obj.set({ selectable: isSelect, evented: isSelect });
+      }
+    });
+    canvas.renderAll();
+  }, [selectedTool, isReady]);
 
-    // Update all annotation objects
-    canvas.getObjects().forEach(obj => {
-      if (getLayerName(obj) === ANNOTATION_LAYER_NAME) {
-        obj.set({
-          selectable: isSelectMode,
-          evented: isSelectMode,
-        });
+  // Sync annotations from props
+  useEffect(() => {
+    const canvas = fabricRef.current;
+    if (!canvas || !isReady) return;
+
+    const canvasIds = new Set<string>();
+    canvas.getObjects().forEach((obj) => {
+      const ext = obj as ExtendedFabricObject;
+      if (ext.layerName === ANNOTATION_LAYER && ext.annotationId) {
+        canvasIds.add(ext.annotationId);
       }
     });
 
-    canvas.renderAll();
-  }, [selectedTool, canvasVersion]);
+    const propsIds = new Set(annotations.map((a) => a.id));
 
-  // ============================================================================
-  // Sync Annotations from Props
-  // ============================================================================
-
-  useEffect(() => {
-    const canvas = fabricCanvasRef.current;
-    if (!canvas) return;
-
-    // Get current annotation IDs on canvas
-    const canvasAnnotationIds = new Set(
-      canvas.getObjects()
-        .filter(obj => getLayerName(obj) === ANNOTATION_LAYER_NAME)
-        .map(obj => getAnnotationId(obj))
-        .filter(Boolean)
-    );
-
-    // Get annotation IDs from props
-    const propsAnnotationIds = new Set(annotations.map(a => a.id));
-
-    // Remove annotations that are no longer in props
-    canvas.getObjects().forEach(obj => {
-      const annotationId = getAnnotationId(obj);
-      if (getLayerName(obj) === ANNOTATION_LAYER_NAME && annotationId && !propsAnnotationIds.has(annotationId)) {
+    // Remove deleted
+    canvas.getObjects().forEach((obj) => {
+      const ext = obj as ExtendedFabricObject;
+      if (ext.layerName === ANNOTATION_LAYER && ext.annotationId && !propsIds.has(ext.annotationId)) {
         canvas.remove(obj);
       }
     });
 
-    // Add new annotations from props
-    annotations.forEach(annotation => {
-      if (!canvasAnnotationIds.has(annotation.id)) {
-        const fabricObj = createFabricObject(annotation, toolSettings);
+    // Add new
+    annotations.forEach((ann) => {
+      if (!canvasIds.has(ann.id)) {
+        const fabricObj = createFabricObject(ann);
         if (fabricObj) {
-          setAnnotationId(fabricObj, annotation.id);
-          setLayerName(fabricObj, ANNOTATION_LAYER_NAME);
+          (fabricObj as ExtendedFabricObject).annotationId = ann.id;
+          (fabricObj as ExtendedFabricObject).layerName = ANNOTATION_LAYER;
           canvas.add(fabricObj);
         }
       }
     });
 
     canvas.renderAll();
-  }, [annotations, canvasVersion, toolSettings]);
+  }, [annotations, isReady]);
 
-  // ============================================================================
-  // Mouse Event Handlers
-  // ============================================================================
 
-  const getCanvasPoint = useCallback((e: fabric.TPointerEventInfo<fabric.TPointerEvent>): Point => {
-    const canvas = fabricCanvasRef.current;
-    if (!canvas) return { x: 0, y: 0 };
+  // Mouse handlers
+  const handleMouseDown = useCallback((e: fabric.TPointerEventInfo<fabric.TPointerEvent>) => {
+    const canvas = fabricRef.current;
+    if (!canvas || selectedTool === 'select') return;
 
     const pointer = canvas.getViewportPoint(e.e);
-    return { x: pointer.x, y: pointer.y };
-  }, []);
+    const point: Point = { x: pointer.x, y: pointer.y };
 
-  // Handle mouse down
-  useEffect(() => {
-    const canvas = fabricCanvasRef.current;
-    if (!canvas) return;
-
-    const handleMouseDown = (e: fabric.TPointerEventInfo<fabric.TPointerEvent>) => {
-      if (selectedTool === 'select') return;
-
-      const point = getCanvasPoint(e);
-
-      if (selectedTool === 'text') {
-        setTextInput({
-          visible: true,
-          position: point,
-          value: '',
-        });
-        return;
-      }
-
-      setIsDrawing(true);
-      setStartPoint(point);
-
-      // Create preview object
-      const preview = createPreviewObject(selectedTool, point, toolSettings);
-      if (preview) {
-        preview.set({
-          selectable: false,
-          evented: false,
-          strokeDashArray: [5, 5],
-        });
-        canvas.add(preview);
-        setPreviewObject(preview);
-      }
-    };
-
-    canvas.on('mouse:down', handleMouseDown);
-
-    return () => {
-      canvas.off('mouse:down', handleMouseDown);
-    };
-  }, [selectedTool, toolSettings, canvasVersion, getCanvasPoint]);
-
-  // Handle mouse move
-  useEffect(() => {
-    const canvas = fabricCanvasRef.current;
-    if (!canvas) return;
-
-    const handleMouseMove = (e: fabric.TPointerEventInfo<fabric.TPointerEvent>) => {
-      if (!isDrawing || !startPoint || !previewObject) return;
-
-      const currentPoint = getCanvasPoint(e);
-      updatePreviewObject(previewObject, startPoint, currentPoint, selectedTool);
-      canvas.renderAll();
-    };
-
-    canvas.on('mouse:move', handleMouseMove);
-
-    return () => {
-      canvas.off('mouse:move', handleMouseMove);
-    };
-  }, [isDrawing, startPoint, previewObject, selectedTool, canvasVersion, getCanvasPoint]);
-
-  // Handle mouse up
-  useEffect(() => {
-    const canvas = fabricCanvasRef.current;
-    if (!canvas) return;
-
-    const handleMouseUp = (e: fabric.TPointerEventInfo<fabric.TPointerEvent>) => {
-      if (!isDrawing || !startPoint) {
-        setIsDrawing(false);
-        return;
-      }
-
-      const endPoint = getCanvasPoint(e);
-
-      // Remove preview object
-      if (previewObject) {
-        canvas.remove(previewObject);
-        setPreviewObject(null);
-      }
-
-      // Create annotation if there's meaningful size
-      const width = Math.abs(endPoint.x - startPoint.x);
-      const height = Math.abs(endPoint.y - startPoint.y);
-
-      if (width > 5 || height > 5) {
-        const annotation = createAnnotationFromPoints(
-          selectedTool,
-          startPoint,
-          endPoint,
-          toolSettings
-        );
-
-        if (annotation) {
-          onAddAnnotation(annotation);
-        }
-      }
-
-      setIsDrawing(false);
-      setStartPoint(null);
-    };
-
-    canvas.on('mouse:up', handleMouseUp);
-
-    return () => {
-      canvas.off('mouse:up', handleMouseUp);
-    };
-  }, [isDrawing, startPoint, previewObject, selectedTool, toolSettings, canvasVersion, getCanvasPoint, onAddAnnotation]);
-
-  // Handle object selection
-  useEffect(() => {
-    const canvas = fabricCanvasRef.current;
-    if (!canvas || !onSelectAnnotation) return;
-
-    const handleSelection = (e: { selected: fabric.FabricObject[] }) => {
-      const selected = e.selected?.[0];
-      if (selected) {
-        const annotationId = getAnnotationId(selected);
-        if (annotationId) {
-          onSelectAnnotation(annotationId);
-        }
-      }
-    };
-
-    const handleDeselection = () => {
-      onSelectAnnotation(null);
-    };
-
-    canvas.on('selection:created', handleSelection);
-    canvas.on('selection:updated', handleSelection);
-    canvas.on('selection:cleared', handleDeselection);
-
-    return () => {
-      canvas.off('selection:created', handleSelection);
-      canvas.off('selection:updated', handleSelection);
-      canvas.off('selection:cleared', handleDeselection);
-    };
-  }, [canvasVersion, onSelectAnnotation]);
-
-  // Handle object modification
-  useEffect(() => {
-    const canvas = fabricCanvasRef.current;
-    if (!canvas || !onModifyAnnotation) return;
-
-    const handleModified = (e: fabric.ModifiedEvent<fabric.TPointerEvent>) => {
-      const target = e.target;
-      if (!target) return;
-
-      const annotationId = (target as fabric.FabricObject & { annotationId?: string }).annotationId;
-      if (!annotationId) return;
-
-      const annotation = annotations.find(a => a.id === annotationId);
-      if (annotation) {
-        const updatedAnnotation = updateAnnotationFromFabricObject(annotation, target);
-        onModifyAnnotation(updatedAnnotation);
-      }
-    };
-
-    canvas.on('object:modified', handleModified);
-
-    return () => {
-      canvas.off('object:modified', handleModified);
-    };
-  }, [canvasVersion, onModifyAnnotation, annotations]);
-
-  // ============================================================================
-  // Text Input Handlers
-  // ============================================================================
-
-  const handleTextSubmit = useCallback(() => {
-    if (!textInput.value.trim()) {
-      setTextInput({ visible: false, position: { x: 0, y: 0 }, value: '' });
+    if (selectedTool === 'text') {
+      setTextInput({ visible: true, x: point.x, y: point.y, value: '' });
       return;
     }
 
-    // Create annotation using the shared Annotation type
-    const annotation: Annotation = {
+    setIsDrawing(true);
+    setStartPoint(point);
+
+    const preview = createPreview(selectedTool, point, toolSettings);
+    if (preview) {
+      preview.set({ selectable: false, evented: false, strokeDashArray: [5, 5] });
+      canvas.add(preview);
+      setPreviewObj(preview);
+    }
+  }, [selectedTool, toolSettings]);
+
+  const handleMouseMove = useCallback((e: fabric.TPointerEventInfo<fabric.TPointerEvent>) => {
+    const canvas = fabricRef.current;
+    if (!canvas || !isDrawing || !startPoint || !previewObj) return;
+
+    const pointer = canvas.getViewportPoint(e.e);
+    updatePreview(previewObj, startPoint, { x: pointer.x, y: pointer.y }, selectedTool);
+    canvas.renderAll();
+  }, [isDrawing, startPoint, previewObj, selectedTool]);
+
+  const handleMouseUp = useCallback((e: fabric.TPointerEventInfo<fabric.TPointerEvent>) => {
+    const canvas = fabricRef.current;
+    if (!canvas || !isDrawing || !startPoint) {
+      setIsDrawing(false);
+      return;
+    }
+
+    const pointer = canvas.getViewportPoint(e.e);
+    const endPoint: Point = { x: pointer.x, y: pointer.y };
+
+    if (previewObj) {
+      canvas.remove(previewObj);
+      setPreviewObj(null);
+    }
+
+    const w = Math.abs(endPoint.x - startPoint.x);
+    const h = Math.abs(endPoint.y - startPoint.y);
+
+    if (w > 5 || h > 5) {
+      const ann = createAnnotation(selectedTool, startPoint, endPoint, toolSettings);
+      if (ann) onAddAnnotation(ann);
+    }
+
+    setIsDrawing(false);
+    setStartPoint(null);
+  }, [isDrawing, startPoint, previewObj, selectedTool, toolSettings, onAddAnnotation]);
+
+  // Attach mouse events
+  useEffect(() => {
+    const canvas = fabricRef.current;
+    if (!canvas || !isReady) return;
+
+    canvas.on('mouse:down', handleMouseDown);
+    canvas.on('mouse:move', handleMouseMove);
+    canvas.on('mouse:up', handleMouseUp);
+
+    return () => {
+      canvas.off('mouse:down', handleMouseDown);
+      canvas.off('mouse:move', handleMouseMove);
+      canvas.off('mouse:up', handleMouseUp);
+    };
+  }, [isReady, handleMouseDown, handleMouseMove, handleMouseUp]);
+
+  // Text input handlers
+  const submitText = useCallback(() => {
+    if (!textInput.value.trim()) {
+      setTextInput({ visible: false, x: 0, y: 0, value: '' });
+      return;
+    }
+    const ann: Annotation = {
       id: crypto.randomUUID(),
       type: 'text',
-      points: [textInput.position],
+      points: [{ x: textInput.x, y: textInput.y }],
       style: {
         color: toolSettings.color,
         strokeWidth: toolSettings.strokeWidth,
@@ -522,118 +288,78 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasRef, AnnotationCanvasProps>(
         text: textInput.value,
       },
     };
-
-    onAddAnnotation(annotation);
-    setTextInput({ visible: false, position: { x: 0, y: 0 }, value: '' });
+    onAddAnnotation(ann);
+    setTextInput({ visible: false, x: 0, y: 0, value: '' });
   }, [textInput, toolSettings, onAddAnnotation]);
 
-  const handleTextKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleTextSubmit();
-    } else if (e.key === 'Escape') {
-      setTextInput({ visible: false, position: { x: 0, y: 0 }, value: '' });
-    }
-  }, [handleTextSubmit]);
-
-  // ============================================================================
-  // Imperative Handle (Ref Methods)
-  // ============================================================================
-
+  // Imperative handle
   useImperativeHandle(ref, () => ({
-    getCanvas: () => fabricCanvasRef.current,
-
+    getCanvas: () => fabricRef.current,
     toDataURL: (format = 'png', quality = 1) => {
-      const canvas = fabricCanvasRef.current;
+      const canvas = fabricRef.current;
       if (!canvas) return null;
-
-      // Deselect all before export
       canvas.discardActiveObject();
       canvas.renderAll();
-
-      return canvas.toDataURL({
-        format: format as 'png' | 'jpeg',
-        quality,
-        multiplier: 1 / zoom, // Export at original size
-      });
+      return canvas.toDataURL({ format: format as 'png' | 'jpeg', quality, multiplier: 1 / zoom });
     },
-
     clearAnnotations: () => {
-      const canvas = fabricCanvasRef.current;
+      const canvas = fabricRef.current;
       if (!canvas) return;
-
-      const objectsToRemove = canvas.getObjects().filter(
-        obj => getLayerName(obj) === ANNOTATION_LAYER_NAME
-      );
-      objectsToRemove.forEach(obj => canvas.remove(obj));
+      const toRemove = canvas.getObjects().filter((o) => (o as ExtendedFabricObject).layerName === ANNOTATION_LAYER);
+      toRemove.forEach((o) => canvas.remove(o));
       canvas.renderAll();
     },
-
     deleteSelected: () => {
-      const canvas = fabricCanvasRef.current;
+      const canvas = fabricRef.current;
       if (!canvas) return;
-
-      const activeObject = canvas.getActiveObject();
-      if (activeObject && getLayerName(activeObject) === ANNOTATION_LAYER_NAME) {
-        canvas.remove(activeObject);
+      const active = canvas.getActiveObject();
+      if (active && (active as ExtendedFabricObject).layerName === ANNOTATION_LAYER) {
+        canvas.remove(active);
         canvas.discardActiveObject();
         canvas.renderAll();
       }
     },
-
     selectAnnotation: (id: string) => {
-      const canvas = fabricCanvasRef.current;
+      const canvas = fabricRef.current;
       if (!canvas) return;
-
-      const obj = canvas.getObjects().find(
-        o => getAnnotationId(o) === id
-      );
+      const obj = canvas.getObjects().find((o) => (o as ExtendedFabricObject).annotationId === id);
       if (obj) {
         canvas.setActiveObject(obj);
         canvas.renderAll();
       }
     },
-
     deselectAll: () => {
-      const canvas = fabricCanvasRef.current;
+      const canvas = fabricRef.current;
       if (!canvas) return;
-
       canvas.discardActiveObject();
       canvas.renderAll();
     },
   }), [zoom]);
 
-  // ============================================================================
-  // Render
-  // ============================================================================
-
-  const canvasStyle: React.CSSProperties = {
+  const style: React.CSSProperties = {
     width: imageDimensions.width * zoom,
     height: imageDimensions.height * zoom,
   };
 
   return (
-    <div className="annotation-canvas-container" ref={containerRef}>
-      <div className="canvas-wrapper" style={canvasStyle}>
-        <canvas
-          ref={canvasRef}
-          width={imageDimensions.width}
-          height={imageDimensions.height}
-        />
+    <div className="annotation-canvas-container">
+      <div className="canvas-wrapper" style={style}>
+        <canvas ref={canvasElRef} width={imageDimensions.width} height={imageDimensions.height} />
         {textInput.visible && (
           <input
             type="text"
             className="text-input"
             style={{
-              left: textInput.position.x * zoom,
-              top: textInput.position.y * zoom,
+              left: textInput.x * zoom,
+              top: textInput.y * zoom,
               color: toolSettings.color,
-              fontSize: (getToolSettingValue(toolSettings, 'fontSize', 16)) * zoom,
+              fontSize: getToolSettingValue(toolSettings, 'fontSize', 16) * zoom,
               fontFamily: getToolSettingValue(toolSettings, 'fontFamily', 'Arial'),
             }}
             value={textInput.value}
-            onChange={(e) => setTextInput(prev => ({ ...prev, value: e.target.value }))}
-            onKeyDown={handleTextKeyDown}
-            onBlur={handleTextSubmit}
+            onChange={(e) => setTextInput((p) => ({ ...p, value: e.target.value }))}
+            onKeyDown={(e) => { if (e.key === 'Enter') submitText(); else if (e.key === 'Escape') setTextInput({ visible: false, x: 0, y: 0, value: '' }); }}
+            onBlur={submitText}
             autoFocus
           />
         )}
@@ -644,23 +370,13 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasRef, AnnotationCanvasProps>(
 
 AnnotationCanvas.displayName = 'AnnotationCanvas';
 
-// ============================================================================
-// Helper Functions
-// ============================================================================
 
-/**
- * Create a Fabric.js object from an annotation
- * Uses the shared Annotation type from ../types which has points array
- */
-function createFabricObject(
-  annotation: Annotation,
-  _toolSettings: ToolSettings
-): fabric.FabricObject | null {
-  const { style, points, type } = annotation;
-
+// Helper functions
+function createFabricObject(ann: Annotation): fabric.FabricObject | null {
+  const { style, points, type } = ann;
   if (points.length < 1) return null;
 
-  const commonOptions: Partial<fabric.FabricObjectProps> = {
+  const opts: Partial<fabric.FabricObjectProps> = {
     stroke: style.color,
     strokeWidth: style.strokeWidth,
     fill: 'transparent',
@@ -671,238 +387,113 @@ function createFabricObject(
   switch (type) {
     case 'rectangle': {
       if (points.length < 2) return null;
-      const [start, end] = points;
-      const width = Math.abs(end.x - start.x);
-      const height = Math.abs(end.y - start.y);
+      const [s, e] = points;
       return new fabric.Rect({
-        ...commonOptions,
-        left: Math.min(start.x, end.x),
-        top: Math.min(start.y, end.y),
-        width,
-        height,
+        ...opts,
+        left: Math.min(s.x, e.x),
+        top: Math.min(s.y, e.y),
+        width: Math.abs(e.x - s.x),
+        height: Math.abs(e.y - s.y),
       });
     }
-
     case 'arrow': {
       if (points.length < 2) return null;
-      const [start, end] = points;
-      
-      // Create line
-      const line = new fabric.Line(
-        [start.x, start.y, end.x, end.y],
-        { ...commonOptions }
-      );
-
-      // Calculate arrowhead
-      const angle = Math.atan2(end.y - start.y, end.x - start.x);
-      const headLength = 15;
-
-      const arrowHead = new fabric.Triangle({
-        left: end.x,
-        top: end.y,
-        width: headLength,
-        height: headLength * 1.5,
+      const [s, e] = points;
+      const line = new fabric.Line([s.x, s.y, e.x, e.y], opts);
+      const angle = Math.atan2(e.y - s.y, e.x - s.x);
+      const head = new fabric.Triangle({
+        left: e.x,
+        top: e.y,
+        width: 15,
+        height: 22,
         fill: style.color,
         angle: (angle * 180) / Math.PI + 90,
         originX: 'center',
         originY: 'bottom',
       });
-
-      return new fabric.Group([line, arrowHead], {
-        left: Math.min(start.x, end.x),
-        top: Math.min(start.y, end.y),
-        selectable: true,
-        evented: true,
-      });
+      return new fabric.Group([line, head], { selectable: true, evented: true });
     }
-
     case 'text': {
-      const [position] = points;
+      const [p] = points;
       return new fabric.IText(style.text || '', {
-        ...commonOptions,
-        left: position.x,
-        top: position.y,
+        ...opts,
+        left: p.x,
+        top: p.y,
         fill: style.color,
         fontSize: style.fontSize || 16,
         fontFamily: 'Arial',
       });
     }
-
     case 'blur': {
-      // Blur is handled differently - just draw a rectangle indicator
       if (points.length < 2) return null;
-      const [start, end] = points;
-      const width = Math.abs(end.x - start.x);
-      const height = Math.abs(end.y - start.y);
+      const [s, e] = points;
       return new fabric.Rect({
-        ...commonOptions,
-        left: Math.min(start.x, end.x),
-        top: Math.min(start.y, end.y),
-        width,
-        height,
-        fill: 'rgba(128, 128, 128, 0.3)',
-        stroke: 'rgba(128, 128, 128, 0.5)',
+        ...opts,
+        left: Math.min(s.x, e.x),
+        top: Math.min(s.y, e.y),
+        width: Math.abs(e.x - s.x),
+        height: Math.abs(e.y - s.y),
+        fill: 'rgba(128,128,128,0.3)',
+        stroke: 'rgba(128,128,128,0.5)',
       });
     }
-
     default:
       return null;
   }
 }
 
-
-
-/**
- * Create a preview object while drawing
- */
-function createPreviewObject(
-  tool: ToolType,
-  startPoint: Point,
-  toolSettings: ToolSettings
-): fabric.FabricObject | null {
-  const commonOptions: Partial<fabric.FabricObjectProps> = {
-    left: startPoint.x,
-    top: startPoint.y,
-    stroke: toolSettings.color,
-    strokeWidth: toolSettings.strokeWidth,
+function createPreview(tool: ToolType, start: Point, settings: ToolSettings): fabric.FabricObject | null {
+  const opts: Partial<fabric.FabricObjectProps> = {
+    left: start.x,
+    top: start.y,
+    stroke: settings.color,
+    strokeWidth: settings.strokeWidth,
     fill: 'transparent',
-    opacity: 1,
   };
 
   switch (tool) {
     case 'rectangle':
-      return new fabric.Rect({
-        ...commonOptions,
-        width: 0,
-        height: 0,
-      });
-
+      return new fabric.Rect({ ...opts, width: 0, height: 0 });
     case 'arrow':
-      return new fabric.Line([startPoint.x, startPoint.y, startPoint.x, startPoint.y], {
-        ...commonOptions,
-      });
-
+      return new fabric.Line([start.x, start.y, start.x, start.y], opts);
     case 'blur':
-      return new fabric.Rect({
-        ...commonOptions,
-        width: 0,
-        height: 0,
-        fill: 'rgba(128, 128, 128, 0.3)',
-        stroke: 'rgba(128, 128, 128, 0.5)',
-      });
-
+      return new fabric.Rect({ ...opts, width: 0, height: 0, fill: 'rgba(128,128,128,0.3)', stroke: 'rgba(128,128,128,0.5)' });
     default:
       return null;
   }
 }
 
-/**
- * Update preview object during drawing
- */
-function updatePreviewObject(
-  obj: fabric.FabricObject,
-  startPoint: Point,
-  currentPoint: Point,
-  tool: ToolType
-): void {
-  const width = currentPoint.x - startPoint.x;
-  const height = currentPoint.y - startPoint.y;
+function updatePreview(obj: fabric.FabricObject, start: Point, current: Point, tool: ToolType): void {
+  const w = current.x - start.x;
+  const h = current.y - start.y;
 
-  switch (tool) {
-    case 'rectangle':
-    case 'blur':
-      obj.set({
-        left: width < 0 ? currentPoint.x : startPoint.x,
-        top: height < 0 ? currentPoint.y : startPoint.y,
-        width: Math.abs(width),
-        height: Math.abs(height),
-      });
-      break;
-
-    case 'arrow':
-      (obj as fabric.Line).set({
-        x2: currentPoint.x,
-        y2: currentPoint.y,
-      });
-      break;
+  if (tool === 'rectangle' || tool === 'blur') {
+    obj.set({
+      left: w < 0 ? current.x : start.x,
+      top: h < 0 ? current.y : start.y,
+      width: Math.abs(w),
+      height: Math.abs(h),
+    });
+  } else if (tool === 'arrow') {
+    (obj as fabric.Line).set({ x2: current.x, y2: current.y });
   }
-
   obj.setCoords();
 }
 
-/**
- * Create an annotation from start and end points
- * Returns the shared Annotation type from ../types
- */
-function createAnnotationFromPoints(
-  tool: ToolType,
-  startPoint: Point,
-  endPoint: Point,
-  toolSettings: ToolSettings
-): Annotation | null {
+function createAnnotation(tool: ToolType, start: Point, end: Point, settings: ToolSettings): Annotation | null {
   const id = crypto.randomUUID();
-
-  const baseStyle = {
-    color: toolSettings.color,
-    strokeWidth: toolSettings.strokeWidth,
-  };
+  const base = { color: settings.color, strokeWidth: settings.strokeWidth };
 
   switch (tool) {
     case 'rectangle':
-      return {
-        id,
-        type: 'rectangle',
-        points: [startPoint, endPoint],
-        style: baseStyle,
-      };
-
+      return { id, type: 'rectangle', points: [start, end], style: base };
     case 'arrow':
-      return {
-        id,
-        type: 'arrow',
-        points: [startPoint, endPoint],
-        style: baseStyle,
-      };
-
+      return { id, type: 'arrow', points: [start, end], style: base };
     case 'blur':
-      return {
-        id,
-        type: 'blur',
-        points: [startPoint, endPoint],
-        style: {
-          ...baseStyle,
-          pixelSize: 10, // Default pixel size, can be made configurable via toolSettings
-        },
-      };
-
+      return { id, type: 'blur', points: [start, end], style: { ...base, pixelSize: 10 } };
     default:
       return null;
   }
 }
-
-/**
- * Update annotation from modified Fabric.js object
- * Updates the points array based on the object's new position
- */
-function updateAnnotationFromFabricObject(
-  annotation: Annotation,
-  obj: fabric.FabricObject
-): Annotation {
-  // For the shared Annotation type, we update the points based on object position
-  const left = obj.left || 0;
-  const top = obj.top || 0;
-  const width = (obj.width || 0) * (obj.scaleX || 1);
-  const height = (obj.height || 0) * (obj.scaleY || 1);
-
-  return {
-    ...annotation,
-    points: [
-      { x: left, y: top },
-      { x: left + width, y: top + height },
-    ],
-  };
-}
-
-
 
 export default AnnotationCanvas;

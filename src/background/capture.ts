@@ -160,6 +160,25 @@ async function isContentScriptInjected(tabId: number): Promise<boolean> {
 }
 
 /**
+ * Inject content script into a tab
+ * @param tabId - The tab ID to inject into
+ */
+async function injectContentScript(tabId: number): Promise<boolean> {
+    try {
+        await chrome.scripting.executeScript({
+            target: { tabId },
+            files: ['src/content/index.ts'],
+        });
+        // Wait a bit for script to initialize
+        await new Promise(resolve => setTimeout(resolve, 200));
+        return true;
+    } catch (error) {
+        console.error('Failed to inject content script:', error);
+        return false;
+    }
+}
+
+/**
  * Capture the full page (scrolling capture)
  * This requires coordination with the content script
  * @returns Promise resolving to CaptureResult
@@ -187,15 +206,24 @@ export async function captureFullPage(): Promise<CaptureResult> {
         const tabId = tab.id;
 
         // Check if content script is already injected
-        const isInjected = await isContentScriptInjected(tabId);
+        let isInjected = await isContentScriptInjected(tabId);
 
         if (!isInjected) {
-            // Try to trigger content script injection by reloading the tab
-            // Or inform user to refresh the page
-            return {
-                success: false,
-                error: 'Please refresh the page and try again. Content script not loaded.',
-            };
+            // Try to inject content script programmatically
+            console.log('Content script not found, attempting to inject...');
+            const injected = await injectContentScript(tabId);
+
+            if (injected) {
+                // Verify injection worked
+                isInjected = await isContentScriptInjected(tabId);
+            }
+
+            if (!isInjected) {
+                return {
+                    success: false,
+                    error: 'Cannot inject content script. Please refresh the page and try again.',
+                };
+            }
         }
 
         // Send message to content script to perform full page capture

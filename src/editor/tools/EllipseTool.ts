@@ -9,21 +9,16 @@
  */
 
 import * as fabric from 'fabric';
-import type {
-    BaseTool,
-    ToolMouseEvent,
-    ToolState,
-    DrawResult
-} from './index';
+import type { BaseTool, ToolMouseEvent, ToolState, DrawResult } from './registry';
+import { toolRegistry } from './registry';
 import {
-    toolRegistry,
     generateAnnotationId,
     createAnnotationStyle,
     createTransform,
     getCommonFabricOptions,
     calculateRectBounds,
     hasMinimumSize,
-} from './index';
+} from './helpers';
 import type { ToolSettings, ShapeAnnotation } from '../types/editor';
 
 /**

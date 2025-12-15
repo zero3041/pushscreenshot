@@ -11,20 +11,9 @@
  */
 
 import * as fabric from 'fabric';
-import type {
-    BaseTool,
-    ToolMouseEvent,
-    ToolState,
-    DrawResult
-} from './index';
-import {
-    toolRegistry,
-    generateAnnotationId,
-    createAnnotationStyle,
-    createTransform,
-    calculateRectBounds,
-    hasMinimumSize,
-} from './index';
+import type { BaseTool, ToolMouseEvent, ToolState, DrawResult } from './registry';
+import { toolRegistry } from './registry';
+import { generateAnnotationId, createAnnotationStyle, createTransform, calculateRectBounds, hasMinimumSize } from './helpers';
 import type { ToolSettings, BlurAnnotation } from '../types/editor';
 
 // ============================================================================
