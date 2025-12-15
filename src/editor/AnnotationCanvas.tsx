@@ -12,46 +12,17 @@
 
 import React, { useRef, useEffect, useState, useCallback, useImperativeHandle, forwardRef } from 'react';
 import * as fabric from 'fabric';
+// Import types from the shared types module (used by Editor.tsx)
 import type { 
-  ToolType as EditorToolType, 
-  ToolSettings as EditorToolSettings, 
+  ToolType, 
+  ToolSettings, 
   Point, 
-  Annotation as EditorAnnotation,
-  ShapeAnnotation,
-  PathAnnotation,
-  ArrowAnnotation,
-  TextAnnotation,
+  Annotation,
+} from '../types';
+// Import extended types from editor types for internal use
+import type { 
+  ToolSettings as EditorToolSettings,
 } from './types/editor';
-
-// Support both old and new annotation formats for backward compatibility
-type ToolType = EditorToolType | 'arrow';
-
-// Legacy tool settings format (from ../types)
-interface LegacyToolSettings {
-  color: string;
-  strokeWidth: number;
-  fontSize?: number;
-  text?: string;
-}
-
-// Combined tool settings type
-type ToolSettings = EditorToolSettings | LegacyToolSettings;
-
-// Legacy annotation format (from ../types)
-interface LegacyAnnotation {
-  id: string;
-  type: ToolType;
-  points: Point[];
-  style: {
-    color: string;
-    strokeWidth: number;
-    fontSize?: number;
-    text?: string;
-  };
-}
-
-// Combined annotation type
-type Annotation = EditorAnnotation | LegacyAnnotation;
 
 // Extended Fabric object with custom properties
 interface ExtendedFabricObject extends fabric.FabricObject {
@@ -173,7 +144,8 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasRef, AnnotationCanvasProps>(
     position: { x: 0, y: 0 },
     value: '',
   });
-  const [canvasReady, setCanvasReady] = useState(false);
+  // Track canvas initialization with a counter to trigger re-renders when canvas is ready
+  const [canvasVersion, setCanvasVersion] = useState(0);
 
   // ============================================================================
   // Initialize Fabric.js Canvas
@@ -192,15 +164,19 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasRef, AnnotationCanvasProps>(
     });
 
     fabricCanvasRef.current = canvas;
-    setCanvasReady(true);
+    
+    // Use setTimeout to defer state update and avoid synchronous setState in effect
+    const timeoutId = setTimeout(() => {
+      setCanvasVersion(v => v + 1);
+    }, 0);
 
     // Cleanup on unmount
     return () => {
+      clearTimeout(timeoutId);
       canvas.dispose();
       fabricCanvasRef.current = null;
-      setCanvasReady(false);
     };
-  }, []);
+  }, [selectedTool]);
 
   // ============================================================================
   // Load Base Image
@@ -208,7 +184,7 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasRef, AnnotationCanvasProps>(
 
   useEffect(() => {
     const canvas = fabricCanvasRef.current;
-    if (!canvas || !imageData || !canvasReady) return;
+    if (!canvas || !imageData) return;
 
     // Remove existing base image
     if (baseImageRef.current) {
@@ -256,7 +232,7 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasRef, AnnotationCanvasProps>(
     };
 
     loadImage();
-  }, [imageData, canvasReady, imageDimensions]);
+  }, [imageData, canvasVersion, imageDimensions]);
 
   // ============================================================================
   // Handle Zoom
@@ -264,7 +240,7 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasRef, AnnotationCanvasProps>(
 
   useEffect(() => {
     const canvas = fabricCanvasRef.current;
-    if (!canvas || !canvasReady) return;
+    if (!canvas) return;
 
     canvas.setZoom(zoom);
     
@@ -277,7 +253,7 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasRef, AnnotationCanvasProps>(
     }
 
     canvas.renderAll();
-  }, [zoom, panOffset, canvasReady]);
+  }, [zoom, panOffset, canvasVersion]);
 
   // ============================================================================
   // Handle Tool Selection Mode
@@ -285,7 +261,7 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasRef, AnnotationCanvasProps>(
 
   useEffect(() => {
     const canvas = fabricCanvasRef.current;
-    if (!canvas || !canvasReady) return;
+    if (!canvas) return;
 
     const isSelectMode = selectedTool === 'select';
     
@@ -303,7 +279,7 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasRef, AnnotationCanvasProps>(
     });
 
     canvas.renderAll();
-  }, [selectedTool, canvasReady]);
+  }, [selectedTool, canvasVersion]);
 
   // ============================================================================
   // Sync Annotations from Props
@@ -311,7 +287,7 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasRef, AnnotationCanvasProps>(
 
   useEffect(() => {
     const canvas = fabricCanvasRef.current;
-    if (!canvas || !canvasReady) return;
+    if (!canvas) return;
 
     // Get current annotation IDs on canvas
     const canvasAnnotationIds = new Set(
@@ -345,7 +321,7 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasRef, AnnotationCanvasProps>(
     });
 
     canvas.renderAll();
-  }, [annotations, canvasReady, toolSettings]);
+  }, [annotations, canvasVersion, toolSettings]);
 
   // ============================================================================
   // Mouse Event Handlers
@@ -362,7 +338,7 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasRef, AnnotationCanvasProps>(
   // Handle mouse down
   useEffect(() => {
     const canvas = fabricCanvasRef.current;
-    if (!canvas || !canvasReady) return;
+    if (!canvas) return;
 
     const handleMouseDown = (e: fabric.TPointerEventInfo<fabric.TPointerEvent>) => {
       if (selectedTool === 'select') return;
@@ -399,12 +375,12 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasRef, AnnotationCanvasProps>(
     return () => {
       canvas.off('mouse:down', handleMouseDown);
     };
-  }, [selectedTool, toolSettings, canvasReady, getCanvasPoint]);
+  }, [selectedTool, toolSettings, canvasVersion, getCanvasPoint]);
 
   // Handle mouse move
   useEffect(() => {
     const canvas = fabricCanvasRef.current;
-    if (!canvas || !canvasReady) return;
+    if (!canvas) return;
 
     const handleMouseMove = (e: fabric.TPointerEventInfo<fabric.TPointerEvent>) => {
       if (!isDrawing || !startPoint || !previewObject) return;
@@ -419,12 +395,12 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasRef, AnnotationCanvasProps>(
     return () => {
       canvas.off('mouse:move', handleMouseMove);
     };
-  }, [isDrawing, startPoint, previewObject, selectedTool, canvasReady, getCanvasPoint]);
+  }, [isDrawing, startPoint, previewObject, selectedTool, canvasVersion, getCanvasPoint]);
 
   // Handle mouse up
   useEffect(() => {
     const canvas = fabricCanvasRef.current;
-    if (!canvas || !canvasReady) return;
+    if (!canvas) return;
 
     const handleMouseUp = (e: fabric.TPointerEventInfo<fabric.TPointerEvent>) => {
       if (!isDrawing || !startPoint) {
@@ -466,17 +442,17 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasRef, AnnotationCanvasProps>(
     return () => {
       canvas.off('mouse:up', handleMouseUp);
     };
-  }, [isDrawing, startPoint, previewObject, selectedTool, toolSettings, canvasReady, getCanvasPoint, onAddAnnotation]);
+  }, [isDrawing, startPoint, previewObject, selectedTool, toolSettings, canvasVersion, getCanvasPoint, onAddAnnotation]);
 
   // Handle object selection
   useEffect(() => {
     const canvas = fabricCanvasRef.current;
-    if (!canvas || !canvasReady || !onSelectAnnotation) return;
+    if (!canvas || !onSelectAnnotation) return;
 
-    const handleSelection = (e: fabric.TEvent<fabric.TPointerEvent> & { selected?: fabric.FabricObject[] }) => {
+    const handleSelection = (e: { selected: fabric.FabricObject[] }) => {
       const selected = e.selected?.[0];
       if (selected) {
-        const annotationId = (selected as fabric.FabricObject & { annotationId?: string }).annotationId;
+        const annotationId = getAnnotationId(selected);
         if (annotationId) {
           onSelectAnnotation(annotationId);
         }
@@ -496,12 +472,12 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasRef, AnnotationCanvasProps>(
       canvas.off('selection:updated', handleSelection);
       canvas.off('selection:cleared', handleDeselection);
     };
-  }, [canvasReady, onSelectAnnotation]);
+  }, [canvasVersion, onSelectAnnotation]);
 
   // Handle object modification
   useEffect(() => {
     const canvas = fabricCanvasRef.current;
-    if (!canvas || !canvasReady || !onModifyAnnotation) return;
+    if (!canvas || !onModifyAnnotation) return;
 
     const handleModified = (e: fabric.ModifiedEvent<fabric.TPointerEvent>) => {
       const target = e.target;
@@ -522,7 +498,7 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasRef, AnnotationCanvasProps>(
     return () => {
       canvas.off('object:modified', handleModified);
     };
-  }, [canvasReady, onModifyAnnotation, annotations]);
+  }, [canvasVersion, onModifyAnnotation, annotations]);
 
   // ============================================================================
   // Text Input Handlers
@@ -534,28 +510,18 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasRef, AnnotationCanvasProps>(
       return;
     }
 
+    // Create annotation using the shared Annotation type
     const annotation: Annotation = {
       id: crypto.randomUUID(),
       type: 'text',
+      points: [textInput.position],
       style: {
         color: toolSettings.color,
         strokeWidth: toolSettings.strokeWidth,
-        opacity: toolSettings.opacity,
+        fontSize: toolSettings.fontSize || 16,
+        text: textInput.value,
       },
-      transform: {
-        x: textInput.position.x,
-        y: textInput.position.y,
-        scaleX: 1,
-        scaleY: 1,
-        rotation: 0,
-      },
-      locked: false,
-      text: textInput.value,
-      fontFamily: toolSettings.fontFamily,
-      fontSize: toolSettings.fontSize,
-      backgroundColor: toolSettings.backgroundColor,
-      hasShadow: toolSettings.hasShadow,
-    } as Annotation;
+    };
 
     onAddAnnotation(annotation);
     setTextInput({ visible: false, position: { x: 0, y: 0 }, value: '' });
@@ -596,7 +562,7 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasRef, AnnotationCanvasProps>(
       if (!canvas) return;
 
       const objectsToRemove = canvas.getObjects().filter(
-        obj => obj.name === ANNOTATION_LAYER_NAME
+        obj => getLayerName(obj) === ANNOTATION_LAYER_NAME
       );
       objectsToRemove.forEach(obj => canvas.remove(obj));
       canvas.renderAll();
@@ -607,7 +573,7 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasRef, AnnotationCanvasProps>(
       if (!canvas) return;
 
       const activeObject = canvas.getActiveObject();
-      if (activeObject && activeObject.name === ANNOTATION_LAYER_NAME) {
+      if (activeObject && getLayerName(activeObject) === ANNOTATION_LAYER_NAME) {
         canvas.remove(activeObject);
         canvas.discardActiveObject();
         canvas.renderAll();
@@ -619,7 +585,7 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasRef, AnnotationCanvasProps>(
       if (!canvas) return;
 
       const obj = canvas.getObjects().find(
-        o => (o as fabric.FabricObject & { annotationId?: string }).annotationId === id
+        o => getAnnotationId(o) === id
       );
       if (obj) {
         canvas.setActiveObject(obj);
@@ -661,8 +627,8 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasRef, AnnotationCanvasProps>(
               left: textInput.position.x * zoom,
               top: textInput.position.y * zoom,
               color: toolSettings.color,
-              fontSize: toolSettings.fontSize * zoom,
-              fontFamily: toolSettings.fontFamily,
+              fontSize: (getToolSettingValue(toolSettings, 'fontSize', 16)) * zoom,
+              fontFamily: getToolSettingValue(toolSettings, 'fontFamily', 'Arial'),
             }}
             value={textInput.value}
             onChange={(e) => setTextInput(prev => ({ ...prev, value: e.target.value }))}
@@ -683,103 +649,13 @@ AnnotationCanvas.displayName = 'AnnotationCanvas';
 // ============================================================================
 
 /**
- * Check if annotation is in legacy format
- */
-function isLegacyAnnotation(annotation: Annotation): annotation is LegacyAnnotation {
-  return 'points' in annotation && Array.isArray((annotation as LegacyAnnotation).points);
-}
-
-/**
  * Create a Fabric.js object from an annotation
+ * Uses the shared Annotation type from ../types which has points array
  */
 function createFabricObject(
   annotation: Annotation,
   _toolSettings: ToolSettings
 ): fabric.FabricObject | null {
-  // Handle legacy annotation format
-  if (isLegacyAnnotation(annotation)) {
-    return createFabricObjectFromLegacy(annotation);
-  }
-
-  const { style, transform } = annotation;
-
-  const commonOptions: Partial<fabric.FabricObjectProps> = {
-    left: transform.x,
-    top: transform.y,
-    scaleX: transform.scaleX,
-    scaleY: transform.scaleY,
-    angle: transform.rotation,
-    stroke: style.color,
-    strokeWidth: style.strokeWidth,
-    opacity: style.opacity,
-    fill: (style as { fill?: string }).fill || 'transparent',
-    selectable: true,
-    evented: true,
-  };
-
-  switch (annotation.type) {
-    case 'rectangle': {
-      const rectAnnotation = annotation as ShapeAnnotation;
-      return new fabric.Rect({
-        ...commonOptions,
-        width: rectAnnotation.width,
-        height: rectAnnotation.height,
-      });
-    }
-
-    case 'ellipse': {
-      const ellipseAnnotation = annotation as ShapeAnnotation;
-      return new fabric.Ellipse({
-        ...commonOptions,
-        rx: ellipseAnnotation.width / 2,
-        ry: ellipseAnnotation.height / 2,
-      });
-    }
-
-    case 'text': {
-      const textAnnotation = annotation as TextAnnotation;
-      return new fabric.IText(textAnnotation.text, {
-        ...commonOptions,
-        fill: style.color,
-        fontFamily: textAnnotation.fontFamily,
-        fontSize: textAnnotation.fontSize,
-        backgroundColor: textAnnotation.backgroundColor,
-        shadow: textAnnotation.hasShadow
-          ? new fabric.Shadow({ color: 'rgba(0,0,0,0.3)', blur: 4, offsetX: 2, offsetY: 2 })
-          : undefined,
-      });
-    }
-
-    case 'curve':
-    case 'highlight': {
-      const pathAnnotation = annotation as PathAnnotation;
-      if (pathAnnotation.points.length < 2) return null;
-
-      const pathData = pointsToPathData(pathAnnotation.points);
-      return new fabric.Path(pathData, {
-        ...commonOptions,
-        fill: 'transparent',
-        opacity: annotation.type === 'highlight' ? 0.5 : style.opacity,
-      });
-    }
-
-    case 'big_head_arrow':
-    case 'line_arrow':
-    case 'bezier_arrow':
-    case 'line': {
-      const arrowAnnotation = annotation as ArrowAnnotation;
-      return createArrowObject(arrowAnnotation, commonOptions);
-    }
-
-    default:
-      return null;
-  }
-}
-
-/**
- * Create a Fabric.js object from a legacy annotation format
- */
-function createFabricObjectFromLegacy(annotation: LegacyAnnotation): fabric.FabricObject | null {
   const { style, points, type } = annotation;
 
   if (points.length < 1) return null;
@@ -874,6 +750,8 @@ function createFabricObjectFromLegacy(annotation: LegacyAnnotation): fabric.Fabr
   }
 }
 
+
+
 /**
  * Create a preview object while drawing
  */
@@ -888,7 +766,7 @@ function createPreviewObject(
     stroke: toolSettings.color,
     strokeWidth: toolSettings.strokeWidth,
     fill: 'transparent',
-    opacity: tool === 'highlight' ? 0.5 : toolSettings.opacity,
+    opacity: 1,
   };
 
   switch (tool) {
@@ -899,18 +777,18 @@ function createPreviewObject(
         height: 0,
       });
 
-    case 'ellipse':
-      return new fabric.Ellipse({
-        ...commonOptions,
-        rx: 0,
-        ry: 0,
-      });
-
-    case 'big_head_arrow':
-    case 'line_arrow':
-    case 'line':
+    case 'arrow':
       return new fabric.Line([startPoint.x, startPoint.y, startPoint.x, startPoint.y], {
         ...commonOptions,
+      });
+
+    case 'blur':
+      return new fabric.Rect({
+        ...commonOptions,
+        width: 0,
+        height: 0,
+        fill: 'rgba(128, 128, 128, 0.3)',
+        stroke: 'rgba(128, 128, 128, 0.5)',
       });
 
     default:
@@ -932,6 +810,7 @@ function updatePreviewObject(
 
   switch (tool) {
     case 'rectangle':
+    case 'blur':
       obj.set({
         left: width < 0 ? currentPoint.x : startPoint.x,
         top: height < 0 ? currentPoint.y : startPoint.y,
@@ -940,18 +819,7 @@ function updatePreviewObject(
       });
       break;
 
-    case 'ellipse':
-      obj.set({
-        left: width < 0 ? currentPoint.x : startPoint.x,
-        top: height < 0 ? currentPoint.y : startPoint.y,
-        rx: Math.abs(width) / 2,
-        ry: Math.abs(height) / 2,
-      });
-      break;
-
-    case 'big_head_arrow':
-    case 'line_arrow':
-    case 'line':
+    case 'arrow':
       (obj as fabric.Line).set({
         x2: currentPoint.x,
         y2: currentPoint.y,
@@ -964,6 +832,7 @@ function updatePreviewObject(
 
 /**
  * Create an annotation from start and end points
+ * Returns the shared Annotation type from ../types
  */
 function createAnnotationFromPoints(
   tool: ToolType,
@@ -972,66 +841,36 @@ function createAnnotationFromPoints(
   toolSettings: ToolSettings
 ): Annotation | null {
   const id = crypto.randomUUID();
-  const width = Math.abs(endPoint.x - startPoint.x);
-  const height = Math.abs(endPoint.y - startPoint.y);
-  const left = Math.min(startPoint.x, endPoint.x);
-  const top = Math.min(startPoint.y, endPoint.y);
 
-  const baseAnnotation = {
-    id,
-    style: {
-      color: toolSettings.color,
-      strokeWidth: toolSettings.strokeWidth,
-      opacity: tool === 'highlight' ? 0.5 : toolSettings.opacity,
-    },
-    transform: {
-      x: left,
-      y: top,
-      scaleX: 1,
-      scaleY: 1,
-      rotation: 0,
-    },
-    locked: false,
+  const baseStyle = {
+    color: toolSettings.color,
+    strokeWidth: toolSettings.strokeWidth,
   };
 
   switch (tool) {
     case 'rectangle':
       return {
-        ...baseAnnotation,
+        id,
         type: 'rectangle',
-        width,
-        height,
-      } as import('./types/editor').ShapeAnnotation;
-
-    case 'ellipse':
-      return {
-        ...baseAnnotation,
-        type: 'ellipse',
-        width,
-        height,
-      } as import('./types/editor').ShapeAnnotation;
-
-    case 'big_head_arrow':
-    case 'line_arrow':
-    case 'line':
-      return {
-        ...baseAnnotation,
-        type: tool,
-        transform: {
-          ...baseAnnotation.transform,
-          x: startPoint.x,
-          y: startPoint.y,
-        },
-        startPoint,
-        endPoint,
-      } as import('./types/editor').ArrowAnnotation;
-
-    case 'highlight':
-      return {
-        ...baseAnnotation,
-        type: 'highlight',
         points: [startPoint, endPoint],
-      } as import('./types/editor').PathAnnotation;
+        style: baseStyle,
+      };
+
+    case 'arrow':
+      return {
+        id,
+        type: 'arrow',
+        points: [startPoint, endPoint],
+        style: baseStyle,
+      };
+
+    case 'blur':
+      return {
+        id,
+        type: 'blur',
+        points: [startPoint, endPoint],
+        style: baseStyle,
+      };
 
     default:
       return null;
@@ -1040,78 +879,27 @@ function createAnnotationFromPoints(
 
 /**
  * Update annotation from modified Fabric.js object
+ * Updates the points array based on the object's new position
  */
 function updateAnnotationFromFabricObject(
   annotation: Annotation,
   obj: fabric.FabricObject
 ): Annotation {
+  // For the shared Annotation type, we update the points based on object position
+  const left = obj.left || 0;
+  const top = obj.top || 0;
+  const width = (obj.width || 0) * (obj.scaleX || 1);
+  const height = (obj.height || 0) * (obj.scaleY || 1);
+
   return {
     ...annotation,
-    transform: {
-      x: obj.left || 0,
-      y: obj.top || 0,
-      scaleX: obj.scaleX || 1,
-      scaleY: obj.scaleY || 1,
-      rotation: obj.angle || 0,
-    },
+    points: [
+      { x: left, y: top },
+      { x: left + width, y: top + height },
+    ],
   };
 }
 
-/**
- * Convert points array to SVG path data
- */
-function pointsToPathData(points: Point[]): string {
-  if (points.length === 0) return '';
 
-  let pathData = `M ${points[0].x} ${points[0].y}`;
-  for (let i = 1; i < points.length; i++) {
-    pathData += ` L ${points[i].x} ${points[i].y}`;
-  }
-  return pathData;
-}
-
-/**
- * Create arrow object with arrowhead
- */
-function createArrowObject(
-  annotation: import('./types/editor').ArrowAnnotation,
-  commonOptions: Partial<fabric.FabricObjectProps>
-): fabric.Group {
-  const { startPoint, endPoint, type } = annotation;
-
-  // Create line
-  const line = new fabric.Line(
-    [startPoint.x, startPoint.y, endPoint.x, endPoint.y],
-    {
-      ...commonOptions,
-      fill: 'transparent',
-    }
-  );
-
-  // Calculate arrowhead
-  const angle = Math.atan2(endPoint.y - startPoint.y, endPoint.x - startPoint.x);
-  const headLength = type === 'big_head_arrow' ? 20 : 12;
-
-  // Create arrowhead
-  const arrowHead = new fabric.Triangle({
-    left: endPoint.x,
-    top: endPoint.y,
-    width: headLength,
-    height: headLength * 1.5,
-    fill: commonOptions.stroke,
-    angle: (angle * 180) / Math.PI + 90,
-    originX: 'center',
-    originY: 'bottom',
-  });
-
-  // Group line and arrowhead
-  const group = new fabric.Group([line, arrowHead], {
-    ...commonOptions,
-    left: Math.min(startPoint.x, endPoint.x),
-    top: Math.min(startPoint.y, endPoint.y),
-  });
-
-  return group;
-}
 
 export default AnnotationCanvas;

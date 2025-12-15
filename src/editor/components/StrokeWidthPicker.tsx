@@ -7,7 +7,8 @@
  */
 
 import React, { useCallback, useEffect, useRef } from 'react';
-import { getStrokeWidthOptions, StrokeWidthMode } from '../utils/strokeWidth';
+import { getStrokeWidthOptions } from '../utils/strokeWidth';
+import type { StrokeWidthMode } from '../utils/strokeWidth';
 import './StrokeWidthPicker.css';
 
 export type { StrokeWidthMode } from '../utils/strokeWidth';
